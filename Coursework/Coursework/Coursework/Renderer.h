@@ -20,5 +20,5 @@ protected:
 	Font*	basicFont;
 
 	float counter, seconds;
-	int frames, fps = 0;
+	int frames, fps;
 };

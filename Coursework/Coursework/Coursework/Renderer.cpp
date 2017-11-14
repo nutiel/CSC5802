@@ -24,11 +24,12 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 	light = new Light(Vector3((RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, (RAW_HEIGHT * HEIGHTMAP_Z / 2.0f)), Vector4(1, 1, 1, 1), (RAW_WIDTH * HEIGHTMAP_X) / 2.0f);
 	projMatrix = Matrix4::Perspective(1.0f, 15000.0f, (float)width / (float)height, 45.0f);
 	glEnable(GL_DEPTH_TEST);
-	/*glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);*/
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	counter = 0.0f;
 	frames = 0;
+	fps = 0;
 
 	init = true;
 }
@@ -48,14 +49,14 @@ void Renderer::UpdateScene(float msec) {
 
 void Renderer::RenderScene() {
 
-	/*counter += seconds;
+	counter += seconds;
 	frames++;
 
-	if (counter >= 60000.0f) {
+	if (counter >= 1000.0f) {
 		counter = 0.0f;
-		frames = 0;
 		fps = frames;
-	}*/
+		frames = 0;
+	}
 
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
@@ -66,12 +67,13 @@ void Renderer::RenderScene() {
 	glUniform3fv(glGetUniformLocation(currentShader->GetProgram(), "cameraPos"), 1, (float *)& camera->GetPosition());
 
 
-	DrawText("FPS: " + std::to_string(fps), Vector3(0, 0, 0), 16.0f);
+	
 
 	UpdateShaderMatrices();
 	SetShaderLight(*light);
 
 	heightMap->Draw();
+	DrawText("FPS: " + std::to_string(fps), Vector3(0, 0, 0), 16.0f);
 	glUseProgram(0);
 	SwapBuffers();
 }
