@@ -24,8 +24,6 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 	light = new Light(Vector3((RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, (RAW_HEIGHT * HEIGHTMAP_Z / 2.0f)), Vector4(1, 1, 1, 1), (RAW_WIDTH * HEIGHTMAP_X) / 2.0f);
 	projMatrix = Matrix4::Perspective(1.0f, 15000.0f, (float)width / (float)height, 45.0f);
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	counter = 0.0f;
 	frames = 0;
@@ -66,14 +64,19 @@ void Renderer::RenderScene() {
 
 	glUniform3fv(glGetUniformLocation(currentShader->GetProgram(), "cameraPos"), 1, (float *)& camera->GetPosition());
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-	
+	DrawText("FPS: " + std::to_string(fps), Vector3(0, 0, 0), 16.0f);
 
-	UpdateShaderMatrices();
+	glBlendFunc(GL_SRC_ALPHA, GL_NONE);
+	glEnable(GL_DEPTH_TEST);
+
+	//UpdateShaderMatrices();
 	SetShaderLight(*light);
 
 	heightMap->Draw();
-	DrawText("FPS: " + std::to_string(fps), Vector3(0, 0, 0), 16.0f);
+	
 	glUseProgram(0);
 	SwapBuffers();
 }
@@ -82,6 +85,9 @@ void Renderer::DrawText(const std::string &text, const Vector3 &position, const 
 	//Create a new temporary TextMesh, using our line of text and our font
 	TextMesh* mesh = new TextMesh(text, *basicFont);
 
+	Matrix4 temp_modelMatrix = modelMatrix;
+	Matrix4 temp_viewMatrix = viewMatrix;
+	Matrix4 temp_projMatrix = projMatrix;
 	//This just does simple matrix setup to render in either perspective or
 	//orthographic mode, there's nothing here that's particularly tricky.
 	if (perspective) {
@@ -101,5 +107,10 @@ void Renderer::DrawText(const std::string &text, const Vector3 &position, const 
 	UpdateShaderMatrices();
 	mesh->Draw();
 
+	modelMatrix = temp_modelMatrix;
+	viewMatrix = temp_viewMatrix;
+	projMatrix = temp_projMatrix;
+	
+	UpdateShaderMatrices();
 	delete mesh; //Once it's drawn, we don't need it anymore!
 }
