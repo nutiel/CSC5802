@@ -18,7 +18,9 @@ protected:
 	Camera * camera;
 	Light * light;
 	Font*	basicFont;
+	Shader * textShader, * floorShader, * skyboxShader;
+	GLuint cubeMap;
 
-	float counter, seconds;
+	float counter, seconds, seconds2;
 	int frames, fps;
 };

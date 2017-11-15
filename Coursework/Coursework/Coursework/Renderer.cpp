@@ -4,30 +4,36 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 
 	camera = new Camera(0.0f, -90.0f, 0.0f, Vector3(RAW_WIDTH * HEIGHTMAP_X / 2.0f, 500, RAW_HEIGHT * HEIGHTMAP_Z));
 
+	floorShader = new Shader(SHADERDIR"BumpVertex.glsl", SHADERDIR"BumpFragment.glsl");
+	textShader = new Shader(SHADERDIR"TexturedVertex.glsl", SHADERDIR"TexturedFragment.glsl");
+	skyboxShader = new Shader(SHADERDIR"SkyboxVertex.glsl", SHADERDIR"SkyboxFragment.glsl");
+	
 	heightMap = new HeightMap(TEXTUREDIR"terrain.raw");
-
-	currentShader = new Shader(SHADERDIR"BumpVertex.glsl", SHADERDIR"BumpFragment.glsl");
-	
 	heightMap->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR"Barren Reds.JPG", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
-	
 	heightMap->SetBumpMap(SOIL_load_OGL_texture(TEXTUREDIR"Barren RedsDOT3.tga", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
 
-	if (!currentShader->LinkProgram() || !heightMap->GetTexture() || !heightMap->GetBumpMap()) {
+	if (!textShader->LinkProgram() || !floorShader->LinkProgram() || !heightMap->GetTexture() || !heightMap->GetBumpMap() || !skyboxShader->LinkProgram()) {
 		return;
 	}
 
 	basicFont = new Font(SOIL_load_OGL_texture(TEXTUREDIR"tahoma.tga", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_COMPRESS_TO_DXT), 16, 16);
+	cubeMap = SOIL_load_OGL_cubemap(TEXTUREDIR"rusted_west.jpg", TEXTUREDIR"rusted_east.jpg", TEXTUREDIR"rusted_up.jpg",
+		TEXTUREDIR"rusted_down.jpg", TEXTUREDIR"rusted_south.jpg", TEXTUREDIR"rusted_north.jpg", SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
+
+	if (!cubeMap) {
+		return;
+	}
 
 	SetTextureRepeating(heightMap->GetTexture(), true);
 	SetTextureRepeating(heightMap->GetBumpMap(), true);
 
 	light = new Light(Vector3((RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, (RAW_HEIGHT * HEIGHTMAP_Z / 2.0f)), Vector4(1, 1, 1, 1), (RAW_WIDTH * HEIGHTMAP_X) / 2.0f);
 	projMatrix = Matrix4::Perspective(1.0f, 15000.0f, (float)width / (float)height, 45.0f);
-	glEnable(GL_DEPTH_TEST);
 
 	counter = 0.0f;
 	frames = 0;
 	fps = 0;
+	seconds2 = 0;
 
 	init = true;
 }
@@ -37,12 +43,16 @@ Renderer ::~Renderer(void) {
 	delete heightMap;
 	delete light;
 	delete basicFont;
+	delete skyboxShader;
 }
 
 void Renderer::UpdateScene(float msec) {
 	camera->UpdateCamera(msec);
 	viewMatrix = camera->BuildViewMatrix();
 	seconds = msec;
+	seconds2 += msec;
+
+	light->SetPosition(Vector3(1500.0f*cos(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, 1500.0f*sin(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f)));
 }
 
 void Renderer::RenderScene() {
@@ -58,24 +68,33 @@ void Renderer::RenderScene() {
 
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-	glUseProgram(currentShader->GetProgram());
-	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 0);
-	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "bumpTex"), 1);
+	SetCurrentShader(textShader);
+	glUniform1i(glGetUniformLocation(textShader->GetProgram(), "diffuseTex"), 0);
+	glUniform1i(glGetUniformLocation(textShader->GetProgram(), "bumpTex"), 1);
 
-	glUniform3fv(glGetUniformLocation(currentShader->GetProgram(), "cameraPos"), 1, (float *)& camera->GetPosition());
+	glUniform3fv(glGetUniformLocation(textShader->GetProgram(), "cameraPos"), 1, (float *)& camera->GetPosition());
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	DrawText("FPS: " + std::to_string(fps), Vector3(0, 0, 0), 16.0f);
+	glUseProgram(0);
+	SetCurrentShader(floorShader);
+	glUniform1i(glGetUniformLocation(floorShader->GetProgram(), "diffuseTex"), 0);
+	glUniform1i(glGetUniformLocation(floorShader->GetProgram(), "bumpTex"), 1);
+
+	glUniform3fv(glGetUniformLocation(floorShader->GetProgram(), "cameraPos"), 1, (float *)& camera->GetPosition());
+
 
 	glBlendFunc(GL_SRC_ALPHA, GL_NONE);
 	glEnable(GL_DEPTH_TEST);
 
-	//UpdateShaderMatrices();
+	UpdateShaderMatrices();
 	SetShaderLight(*light);
 
 	heightMap->Draw();
+	
+
 	
 	glUseProgram(0);
 	SwapBuffers();

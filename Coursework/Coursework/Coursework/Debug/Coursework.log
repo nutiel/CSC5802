@@ -1,3 +1,4 @@
 ﻿  Renderer.cpp
+d:\csc5802\coursework\coursework\coursework\renderer.cpp(55): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
   Coursework.vcxproj -> D:\CSC5802\Coursework\Coursework\Debug\CourseWork1.exe
   Coursework.vcxproj -> D:\CSC5802\Coursework\Coursework\Debug\CourseWork1.pdb (Partial PDB)
