@@ -35,4 +35,8 @@ void main ( void ) {
 	}
 	
 	gl_FragColor = combination;
+	
+	//gl_FragColor.rgb = vec3(0,1,0);
+	
+	//gl_FragColor.a = 1.0f;
 }

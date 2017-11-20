@@ -28,7 +28,7 @@ ParticleEmitter::ParticleEmitter(void)	{
 	//texture = SOIL_load_OGL_texture("../Textures/particle.tga",
 	//SOIL_LOAD_AUTO,SOIL_CREATE_NEW_ID,SOIL_FLAG_COMPRESS_TO_DXT);
 
-	texture = SOIL_load_OGL_texture(TEXTUREDIR"rusted_down.jpg",
+	texture = SOIL_load_OGL_texture(TEXTUREDIR"particle.tga",
 		SOIL_LOAD_AUTO,SOIL_CREATE_NEW_ID,SOIL_FLAG_COMPRESS_TO_DXT);
 }
 

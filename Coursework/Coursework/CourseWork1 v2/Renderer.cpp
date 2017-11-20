@@ -2,7 +2,7 @@
 
 Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 
-	camera = new Camera(0.0f, -90.0f, 0.0f, Vector3(RAW_WIDTH * HEIGHTMAP_X / 2.0f, 500, RAW_HEIGHT * HEIGHTMAP_Z));
+	camera = new Camera(-65.0f, 0.0f, 0.0f, Vector3(RAW_WIDTH * HEIGHTMAP_X/2.0f, 4000, RAW_HEIGHT * HEIGHTMAP_Z + 500));
 	quad = Mesh::GenerateQuad();
 	Cube::CreateCube();
 	Sphere::CreateSphere();
@@ -11,23 +11,27 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 	textShader = new Shader(SHADERDIR"TexturedVertex.glsl", SHADERDIR"TexturedFragment.glsl");
 	skyboxShader = new Shader(SHADERDIR"SkyboxVertex.glsl", SHADERDIR"SkyboxFragment.glsl");
 	eyeShader = new Shader(SHADERDIR"SceneVertex.glsl", SHADERDIR"eyeFilter.glsl");//SceneFragment.glsl
-	regularShader = new Shader(SHADERDIR"SceneVertex.glsl", SHADERDIR"SceneFragment.glsl");
+	regularShader = new Shader(SHADERDIR"SceneVertex.glsl", SHADERDIR"sunFragment.glsl");
 
 	heightMap = new HeightMap(TEXTUREDIR"terrain.raw");
 	heightMap->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR"Barren Reds.JPG", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
 	heightMap->SetBumpMap(SOIL_load_OGL_texture(TEXTUREDIR"Barren RedsDOT3.tga", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
 
 	if (!textShader->LinkProgram() || !floorShader->LinkProgram() || !heightMap->GetTexture() || !heightMap->GetBumpMap() 
-		|| !skyboxShader->LinkProgram() || !eyeShader->LinkProgram()) {
+		|| !skyboxShader->LinkProgram() || !eyeShader->LinkProgram() || !regularShader->LinkProgram()) {
 		return;
 	}
 
 	basicFont = new Font(SOIL_load_OGL_texture(TEXTUREDIR"tahoma.tga", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_COMPRESS_TO_DXT), 16, 16);
 
+	//picture used from: https://www.google.co.uk/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwiowMTE0s3XAhUlDcAKHYZ4AU4QjRwIBw&url=https%3A%2F%2F3docean.net%2Fitem%2Fhdr-desert-skies%2F16042303&psig=AOvVaw1ptnkitm5UFFnGpmFQz1u5&ust=1511284188144421
+	cubeMap2 = SOIL_load_OGL_cubemap(TEXTUREDIR"px.png", TEXTUREDIR"nx.png", TEXTUREDIR"py.png",
+		TEXTUREDIR"ny.png", TEXTUREDIR"pz.png", TEXTUREDIR"nz.png", SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
+
 	cubeMap = SOIL_load_OGL_cubemap(TEXTUREDIR"rusted_west.jpg", TEXTUREDIR"rusted_east.jpg", TEXTUREDIR"rusted_up.jpg",
 		TEXTUREDIR"rusted_down.jpg", TEXTUREDIR"rusted_south.jpg", TEXTUREDIR"rusted_north.jpg", SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
 
-	if (!cubeMap) {
+	if (!cubeMap || !cubeMap2) {
 		return;
 	}
 
@@ -42,6 +46,8 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 	root->getChildren()[0]->setShader(eyeShader);
 	root->AddChild(new Sphere(light->GetPosition()));
 	root->getChildren()[1]->setShader(regularShader);
+
+	root->SetBoundingRadius(0.0f);
 
 	counter = 0.0f;
 	frames = 0;
@@ -60,14 +66,19 @@ Renderer ::~Renderer(void) {
 	delete light;
 	delete basicFont;
 	delete skyboxShader;
+	delete floorShader;
+	delete textShader;
+	delete eyeShader;
+	delete regularShader;
 	delete root;
 	delete quad;
+
+	currentShader = NULL;
 	Cube::DeleteCube();
 	Sphere::DeleteSphere();
 }
 
 void Renderer::UpdateScene(float msec, bool switchScene) {
-
 	this->switchScene = switchScene;
 
 	camera->UpdateCamera(msec);
@@ -95,6 +106,9 @@ void Renderer::UpdateScene(float msec, bool switchScene) {
 	*v = light->GetPosition();
 	m->SetPositionVector(*v);
 	root->getChildren()[1]->SetTransform(*m);
+
+	delete m;
+	delete v;
 }
 
 void Renderer::RenderScene() {
@@ -107,7 +121,7 @@ void Renderer::RenderScene() {
 		fps = frames;
 		frames = 0;
 	}
-
+	ClearNodeLists();
 	BuildNodeLists(root);
 	SortNodeLists();
 
@@ -117,6 +131,7 @@ void Renderer::RenderScene() {
 	drawSkyBox();
 	DrawNodes();
 
+	ClearNodeLists();
 	SwapBuffers();
 }
 
@@ -220,8 +235,8 @@ void Renderer::DrawText(const std::string &text, const Vector3 &position, const 
 
 void Renderer::DrawNode(SceneNode * n) {
 
-	SetCurrentShader(n->getShader());//eyeShader works kinda
-	UpdateShaderMatrices();
+
+	
 
 	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 1);
 
@@ -229,7 +244,9 @@ void Renderer::DrawNode(SceneNode * n) {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	if (n->GetMesh()) {
+	if (n->GetMesh()) {	
+		SetCurrentShader(n->getShader());
+		UpdateShaderMatrices();
 		Matrix4 transform = n->GetWorldTransform() * Matrix4::Scale(n->GetModelScale());
 
 		glUniformMatrix4fv(glGetUniformLocation(currentShader->GetProgram(), "modelMatrix"), 1, false, (float *)& transform);
@@ -245,9 +262,6 @@ void Renderer::DrawNode(SceneNode * n) {
 		n->Draw(*this);
 	}
 
-	for (vector <SceneNode*>::const_iterator i = n->GetChildIteratorStart(); i != n->GetChildIteratorEnd(); ++i) {
-		DrawNode(*i);
-	}
 	glUseProgram(0);
 }
 

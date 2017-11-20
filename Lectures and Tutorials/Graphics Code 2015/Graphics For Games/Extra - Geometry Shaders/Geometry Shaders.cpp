@@ -1,7 +1,7 @@
+#pragma comment(lib, "nclgl.lib")
+
 #include "../../NCLGL/window.h"
 #include "Renderer.h"
-
-#pragma comment(lib, "nclgl.lib")
 
 int main() {
 	Window w("Geometry Particles!!", 800,600,false);	//This is all boring win32 window creation stuff!

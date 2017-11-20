@@ -31,7 +31,7 @@ protected:
 	Light * light;
 	Font*	basicFont;
 	Shader *textShader, *floorShader, *skyboxShader, *eyeShader, *regularShader;
-	GLuint cubeMap;
+	GLuint cubeMap, cubeMap2;
 
 
 	void BuildNodeLists(SceneNode * from);
@@ -48,7 +48,6 @@ protected:
 	int frames, fps;
 
 	bool switchScene;
-
 	void showFPS();
 	void drawSkyBox();
 };

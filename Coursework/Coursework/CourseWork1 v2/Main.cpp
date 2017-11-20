@@ -63,9 +63,7 @@ int main() {
 		case 0:
 			//cout << "Scene  " << scene << endl;
 			if (fadeout) {
-				//while (t - t_past < FADE_TIME) {
 				while (renderer.getFade() < FADE_TIME) {
-					//t = w.GetTimer()->GetMS();
 					renderer.UpdateScene(w.GetTimer()->GetTimedMS(), 2);
 					renderer.RenderScene();
 				}
@@ -75,7 +73,6 @@ int main() {
 				fadeout = false;
 			}else if(fadein) {
 				while (renderer.getFade() < FADE_TIME + 151) {
-					//t = w.GetTimer()->GetMS();
 					renderer.UpdateScene(w.GetTimer()->GetTimedMS(), 1);
 					renderer.RenderScene();
 				}
@@ -91,7 +88,6 @@ int main() {
 			//cout << "Scene  " << scene << endl;
 			if (fadeout) {
 				while (renderer.getFade() < FADE_TIME) {
-					//t = w.GetTimer()->GetMS();
 					renderer.UpdateScene(w.GetTimer()->GetTimedMS(), 2);
 					renderer.RenderScene();
 				}
@@ -102,7 +98,6 @@ int main() {
 			}
 			else if (fadein) {
 				while (renderer.getFade() < FADE_TIME + 151) {
-					//t = w.GetTimer()->GetMS();
 					renderer.UpdateScene(w.GetTimer()->GetTimedMS(), 1);
 					renderer.RenderScene();
 				}
@@ -118,7 +113,6 @@ int main() {
 			//cout << "Scene  " << scene << endl;
 			if (fadeout) {
 				while (renderer.getFade() < FADE_TIME) {
-					//t = w.GetTimer()->GetMS();
 					renderer.UpdateScene(w.GetTimer()->GetTimedMS(), 2);
 					renderer.RenderScene();
 				}
@@ -129,7 +123,6 @@ int main() {
 			}
 			else if (fadein) {
 				while (renderer.getFade() < FADE_TIME + 151) {
-					//t = w.GetTimer()->GetMS();
 					renderer.UpdateScene(w.GetTimer()->GetTimedMS(), 1);
 					renderer.RenderScene();
 				}

@@ -1,10 +1,7 @@
-﻿  tutorial3.cpp
-  Renderer.cpp
+﻿  Renderer.cpp
 d:\csc5802\lectures and tutorials\graphics code 2015\graphics for games\3) texturing\renderer.cpp(36): warning C4305: '+=': truncation from 'double' to 'float'
   Generating Code...
-Renderer.obj : warning LNK4049: locally defined symbol ___glewGetUniformLocation imported
-Renderer.obj : warning LNK4049: locally defined symbol ___glewUniform1f imported
-Renderer.obj : warning LNK4049: locally defined symbol ___glewUniform1i imported
-Renderer.obj : warning LNK4049: locally defined symbol ___glewUseProgram imported
+  Skipping... (no relevant changes detected)
+  tutorial3.cpp
   Tutorial3.vcxproj -> D:\CSC5802\Lectures and Tutorials\Graphics Code 2015\Graphics For Games\Debug\Tutorial 03 - Texturing.exe
   Tutorial3.vcxproj -> D:\CSC5802\Lectures and Tutorials\Graphics Code 2015\Graphics For Games\Debug\Tutorial 03 - Texturing.pdb (Full PDB)

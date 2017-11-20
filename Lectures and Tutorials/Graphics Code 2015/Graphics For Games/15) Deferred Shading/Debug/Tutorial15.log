@@ -1,8 +1,4 @@
-﻿  Tutorial15.cpp
-d:\csc5802\lectures and tutorials\graphics code 2015\graphics for games\15) deferred shading\tutorial15.cpp(12): warning C4244: 'argument': conversion from 'float' to 'unsigned int', possible loss of data
-  Renderer.cpp
-  Generating Code...
-Renderer.obj : warning LNK4049: locally defined symbol ___glewActiveTexture imported
+﻿Renderer.obj : warning LNK4049: locally defined symbol ___glewActiveTexture imported
 Renderer.obj : warning LNK4049: locally defined symbol ___glewDrawBuffers imported
 Renderer.obj : warning LNK4049: locally defined symbol ___glewGetUniformLocation imported
 Renderer.obj : warning LNK4049: locally defined symbol ___glewUniform1i imported
