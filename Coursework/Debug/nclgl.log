@@ -1,0 +1,19 @@
+﻿  Camera.cpp
+  Generating Code...
+  Compiling...
+  Window.cpp
+  TextMesh.cpp
+  Shader.cpp
+  SceneNode.cpp
+  OGLRenderer.cpp
+  OBJMesh.cpp
+  Mesh.cpp
+  MD5Node.cpp
+  MD5Mesh.cpp
+  MD5FileData.cpp
+  MD5Anim.cpp
+  HeightMap.cpp
+  Frustum.cpp
+  CubeRobot.cpp
+  Generating Code...
+  nclgl.vcxproj -> D:\CSC5802\Coursework\Coursework\Debug\nclgl.lib

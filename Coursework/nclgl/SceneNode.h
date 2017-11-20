@@ -44,6 +44,7 @@ public:
 		return (a->distanceFromCamera < b->distanceFromCamera) ? true : false;
 	}
 
+	vector < SceneNode * > getChildren() { return children; }
 protected:
 	SceneNode * parent;
 	Mesh * mesh;

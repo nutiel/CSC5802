@@ -148,7 +148,7 @@ Matrix4 Matrix4::Translation( const Vector3 &translation )	{
 
 	m.values[12] = translation.x;
 	m.values[13] = translation.y;
-	m.values[14] = translation.z;	
+	m.values[14] = translation.z;
 
 	return m;
 }

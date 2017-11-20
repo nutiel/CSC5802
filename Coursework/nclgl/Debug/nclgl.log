@@ -1,2 +1,10 @@
-﻿  TextMesh.cpp
+﻿  CubeRobot.cpp
+  Generating Code...
+  Compiling...
+  HeightMap.cpp
+  Generating Code...
+  Skipping... (no relevant changes detected)
+  SceneNode.cpp
+  MD5Node.cpp
+  Frustum.cpp
   nclgl.vcxproj -> D:\CSC5802\Coursework\Coursework\Debug\nclgl.lib

@@ -5,6 +5,12 @@
 
 class Light {
 public:
+	Light() {
+		this->position = Vector3((257 * 16.0f / 2.0f), 500.0f, (257 * 16.0f / 2.0f));
+		this->colour = Vector4(1, 1, 1, 1);
+		this->radius = (257 * 16.0f) / 2.0f;
+
+	}
 	Light(Vector3 position, Vector4 colour, float radius) {
 		this->position = position;
 		this->colour = colour;
