@@ -7,6 +7,7 @@
 #include "../../nclgl/SceneNode.h"
 #include "../../nclgl/Frustum.h"
 #include "Cube.h"
+#include "Sphere.h"
 #include <algorithm>
 
 class Renderer : public OGLRenderer {
@@ -15,7 +16,11 @@ public:
 	virtual ~Renderer(void);
 
 	virtual void RenderScene();
-	virtual void UpdateScene(float msec);
+	void RenderScene2();
+	virtual void UpdateScene(float msec, bool switchScene);
+
+	void resetFade();
+	int getFade();
 
 	void DrawText(const std::string &text, const Vector3 &position, const float size = 10.0f, const bool perspective = false);
 
@@ -25,7 +30,7 @@ protected:
 	Camera * camera;
 	Light * light;
 	Font*	basicFont;
-	Shader *textShader, *floorShader, *skyboxShader, *cubeShader;
+	Shader *textShader, *floorShader, *skyboxShader, *eyeShader, *regularShader;
 	GLuint cubeMap;
 
 
@@ -39,10 +44,10 @@ protected:
 	vector < SceneNode * > transparentNodeList;
 	vector < SceneNode * > nodeList;
 
-	
-
-	float counter, seconds, seconds2;
+	float counter, seconds, seconds2, fade;
 	int frames, fps;
+
+	bool switchScene;
 
 	void showFPS();
 	void drawSkyBox();

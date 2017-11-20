@@ -1,18 +1,18 @@
-# version 150 core
+#version 150 core
 
-uniform sampler2D diffuseTex ;
-uniform int useTexture ;
+uniform sampler2D diffuseTex;
+uniform int useTexture;
 
 in Vertex {
-vec2 texCoord ;
-vec4 colour ;
-} IN ;
+	vec2 texCoord;
+	vec4 colour;
+} IN;
 
- out vec4 gl_FragColor ;
+ out vec4 gl_FragColor;
 
  void main ( void ) {
- gl_FragColor = IN . colour ;
- if( useTexture > 0) {
- gl_FragColor *= texture ( diffuseTex , IN . texCoord );
- }
+	gl_FragColor = IN.colour;
+	if( useTexture > 0) {
+		gl_FragColor *= texture ( diffuseTex , IN.texCoord );
+	}
  }

@@ -5,18 +5,20 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 	camera = new Camera(0.0f, -90.0f, 0.0f, Vector3(RAW_WIDTH * HEIGHTMAP_X / 2.0f, 500, RAW_HEIGHT * HEIGHTMAP_Z));
 	quad = Mesh::GenerateQuad();
 	Cube::CreateCube();
+	Sphere::CreateSphere();
 
 	floorShader = new Shader(SHADERDIR"BumpVertex.glsl", SHADERDIR"BumpFragment.glsl");
 	textShader = new Shader(SHADERDIR"TexturedVertex.glsl", SHADERDIR"TexturedFragment.glsl");
 	skyboxShader = new Shader(SHADERDIR"SkyboxVertex.glsl", SHADERDIR"SkyboxFragment.glsl");
-	cubeShader = new Shader(SHADERDIR"SceneVertex.glsl", SHADERDIR"eyeFilter.glsl");//SceneFragment.glsl
+	eyeShader = new Shader(SHADERDIR"SceneVertex.glsl", SHADERDIR"eyeFilter.glsl");//SceneFragment.glsl
+	regularShader = new Shader(SHADERDIR"SceneVertex.glsl", SHADERDIR"SceneFragment.glsl");
 
 	heightMap = new HeightMap(TEXTUREDIR"terrain.raw");
 	heightMap->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR"Barren Reds.JPG", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
 	heightMap->SetBumpMap(SOIL_load_OGL_texture(TEXTUREDIR"Barren RedsDOT3.tga", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
 
 	if (!textShader->LinkProgram() || !floorShader->LinkProgram() || !heightMap->GetTexture() || !heightMap->GetBumpMap() 
-		|| !skyboxShader->LinkProgram() || !cubeShader->LinkProgram()) {
+		|| !skyboxShader->LinkProgram() || !eyeShader->LinkProgram()) {
 		return;
 	}
 
@@ -37,11 +39,17 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 
 	root = new SceneNode();
 	root->AddChild(new Cube(camera->GetPosition()));
+	root->getChildren()[0]->setShader(eyeShader);
+	root->AddChild(new Sphere(light->GetPosition()));
+	root->getChildren()[1]->setShader(regularShader);
 
 	counter = 0.0f;
 	frames = 0;
 	fps = 0;
 	seconds2 = 0;
+	fade = 0;
+	switchScene = false;
+
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	init = true;
 }
@@ -55,9 +63,13 @@ Renderer ::~Renderer(void) {
 	delete root;
 	delete quad;
 	Cube::DeleteCube();
+	Sphere::DeleteSphere();
 }
 
-void Renderer::UpdateScene(float msec) {
+void Renderer::UpdateScene(float msec, bool switchScene) {
+
+	this->switchScene = switchScene;
+
 	camera->UpdateCamera(msec);
 	viewMatrix = camera->BuildViewMatrix();
 	frameFrustum.FromMatrix(projMatrix * viewMatrix);
@@ -66,13 +78,23 @@ void Renderer::UpdateScene(float msec) {
 	seconds = msec;
 	seconds2 += msec;
 
+	if (switchScene == 1 || switchScene == 2) {
+		fade++;
+	}
+
 	Matrix4 *m = new Matrix4();
 	m->ToIdentity();
+
 	Vector3 *v = new Vector3(camera->GetPosition());
 	v->y -= 150;
 	m->SetPositionVector(*v);
 	light->SetPosition(Vector3(1500.0f*cos(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, 1500.0f*sin(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f)));
 	root->getChildren()[0]->SetTransform(*m);
+
+	m->ToIdentity();
+	*v = light->GetPosition();
+	m->SetPositionVector(*v);
+	root->getChildren()[1]->SetTransform(*m);
 }
 
 void Renderer::RenderScene() {
@@ -95,6 +117,26 @@ void Renderer::RenderScene() {
 	drawSkyBox();
 	DrawNodes();
 
+	SwapBuffers();
+}
+
+void Renderer::RenderScene2() {
+	counter += seconds;
+	frames++;
+
+	if (counter >= 1000.0f) {
+		counter = 0.0f;
+		fps = frames;
+		frames = 0;
+	}
+
+	BuildNodeLists(root);
+	SortNodeLists();
+
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	
+	showFPS();
+	
 	SwapBuffers();
 }
 
@@ -178,10 +220,10 @@ void Renderer::DrawText(const std::string &text, const Vector3 &position, const 
 
 void Renderer::DrawNode(SceneNode * n) {
 
-	SetCurrentShader(cubeShader);
+	SetCurrentShader(n->getShader());//eyeShader works kinda
 	UpdateShaderMatrices();
 
-	glUniform1i(glGetUniformLocation(cubeShader->GetProgram(), "diffuseTex"), 1);
+	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 1);
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
@@ -190,20 +232,20 @@ void Renderer::DrawNode(SceneNode * n) {
 	if (n->GetMesh()) {
 		Matrix4 transform = n->GetWorldTransform() * Matrix4::Scale(n->GetModelScale());
 
-		glUniformMatrix4fv(glGetUniformLocation(cubeShader->GetProgram(), "modelMatrix"), 1, false, (float *)& transform);
+		glUniformMatrix4fv(glGetUniformLocation(currentShader->GetProgram(), "modelMatrix"), 1, false, (float *)& transform);
 
-		glUniform4fv(glGetUniformLocation(cubeShader->GetProgram(), "nodeColour"), 1, (float *)& n->GetColour());
+		glUniform4fv(glGetUniformLocation(currentShader->GetProgram(), "nodeColour"), 1, (float *)& n->GetColour());
 
-		glUniform1i(glGetUniformLocation(cubeShader->GetProgram(), "useTexture"), (int)n->GetMesh()->GetTexture());
+		glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "useTexture"), (int)n->GetMesh()->GetTexture());
 
-		glUniform1f(glGetUniformLocation(cubeShader->GetProgram(), "iTime"), seconds2/1000.0);
+		glUniform1f(glGetUniformLocation(currentShader->GetProgram(), "iTime"), fade/100);
+
+		glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "switchScene"), switchScene);
 
 		n->Draw(*this);
 	}
 
-	for (vector < SceneNode * >::const_iterator
-		i = n->GetChildIteratorStart();
-		i != n->GetChildIteratorEnd(); ++i) {
+	for (vector <SceneNode*>::const_iterator i = n->GetChildIteratorStart(); i != n->GetChildIteratorEnd(); ++i) {
 		DrawNode(*i);
 	}
 	glUseProgram(0);
@@ -254,4 +296,12 @@ void Renderer::DrawNodes() {
 void Renderer::ClearNodeLists() {
 	transparentNodeList.clear();
 	nodeList.clear();
+}
+
+int Renderer::getFade() {
+	return fade;
+}
+
+void Renderer::resetFade() {
+	fade = 0;
 }

@@ -1,12 +1,6 @@
-﻿  Cube.cpp
-d:\csc5802\coursework\coursework\coursework1 v2\cube.cpp(5): warning C4305: 'argument': truncation from 'double' to 'float'
-  Generating Code...
-  Compiling...
-  Renderer.cpp
-d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(74): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
-d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(199): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-  Main.cpp
-d:\csc5802\coursework\coursework\coursework1 v2\main.cpp(25): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-  Generating Code...
+﻿  Renderer.cpp
+d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(81): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(91): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(302): warning C4244: 'return': conversion from 'float' to 'int', possible loss of data
   CourseWork1 v2.vcxproj -> D:\CSC5802\Coursework\Coursework\Debug\CourseWork1 v2.exe
   CourseWork1 v2.vcxproj -> D:\CSC5802\Coursework\Coursework\Debug\CourseWork1 v2.pdb (Partial PDB)

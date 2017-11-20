@@ -45,6 +45,10 @@ public:
 	}
 
 	vector < SceneNode * > getChildren() { return children; }
+
+	Shader* getShader() { return s; }
+	void setShader(Shader *shad) { s = shad; }
+
 protected:
 	SceneNode * parent;
 	Mesh * mesh;
@@ -55,4 +59,5 @@ protected:
 	std::vector < SceneNode * > children;
 	float distanceFromCamera;
 	float boundingRadius;
+	Shader *s;
 };

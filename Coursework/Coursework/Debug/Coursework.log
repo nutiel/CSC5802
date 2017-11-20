@@ -1,11 +1,4 @@
-﻿  RendererTmp.cpp
-d:\csc5802\coursework\coursework\coursework\renderertmp.cpp(60): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
-  Renderer.cpp
+﻿  Renderer.cpp
 d:\csc5802\coursework\coursework\coursework\renderer.cpp(22): error C2039: 'DeleteCube': is not a member of 'CubeMap'
   d:\csc5802\coursework\coursework\coursework\cubemap.h(4): note: see declaration of 'CubeMap'
 d:\csc5802\coursework\coursework\coursework\renderer.cpp(22): error C3861: 'DeleteCube': identifier not found
-  Generating Code...
-  Compiling...
-  MainScene.cpp
-  CubeMap.cpp
-  Generating Code...
