@@ -25,13 +25,13 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 	basicFont = new Font(SOIL_load_OGL_texture(TEXTUREDIR"tahoma.tga", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_COMPRESS_TO_DXT), 16, 16);
 
 	//picture used from: https://www.google.co.uk/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwiowMTE0s3XAhUlDcAKHYZ4AU4QjRwIBw&url=https%3A%2F%2F3docean.net%2Fitem%2Fhdr-desert-skies%2F16042303&psig=AOvVaw1ptnkitm5UFFnGpmFQz1u5&ust=1511284188144421
-	cubeMap2 = SOIL_load_OGL_cubemap(TEXTUREDIR"px.png", TEXTUREDIR"nx.png", TEXTUREDIR"py.png",
-		TEXTUREDIR"ny.png", TEXTUREDIR"pz.png", TEXTUREDIR"nz.png", SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
+	/*cubeMap = SOIL_load_OGL_cubemap(TEXTUREDIR"px.png", TEXTUREDIR"nx.png", TEXTUREDIR"py.png",
+		TEXTUREDIR"ny.png", TEXTUREDIR"pz.png", TEXTUREDIR"nz.png", SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);*/
 
 	cubeMap = SOIL_load_OGL_cubemap(TEXTUREDIR"rusted_west.jpg", TEXTUREDIR"rusted_east.jpg", TEXTUREDIR"rusted_up.jpg",
 		TEXTUREDIR"rusted_down.jpg", TEXTUREDIR"rusted_south.jpg", TEXTUREDIR"rusted_north.jpg", SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
 
-	if (!cubeMap || !cubeMap2) {
+	if (!cubeMap) {
 		return;
 	}
 
@@ -135,26 +135,6 @@ void Renderer::RenderScene() {
 	SwapBuffers();
 }
 
-void Renderer::RenderScene2() {
-	counter += seconds;
-	frames++;
-
-	if (counter >= 1000.0f) {
-		counter = 0.0f;
-		fps = frames;
-		frames = 0;
-	}
-
-	BuildNodeLists(root);
-	SortNodeLists();
-
-	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	
-	showFPS();
-	
-	SwapBuffers();
-}
-
 void Renderer::showFPS() {
 	SetCurrentShader(textShader);
 	glUniform1i(glGetUniformLocation(textShader->GetProgram(), "diffuseTex"), 0);
@@ -234,9 +214,6 @@ void Renderer::DrawText(const std::string &text, const Vector3 &position, const 
 }
 
 void Renderer::DrawNode(SceneNode * n) {
-
-
-	
 
 	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 1);
 

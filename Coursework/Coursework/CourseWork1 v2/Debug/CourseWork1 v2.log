@@ -1,14 +1,7 @@
-﻿  Renderer.cpp
-d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(92): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
-d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(102): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
-d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(316): warning C4244: 'return': conversion from 'float' to 'int', possible loss of data
-  Generating Code...
-  Compiling...
-  Main.cpp
+﻿  Main.cpp
 d:\csc5802\coursework\coursework\coursework1 v2\main.cpp(27): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
 d:\csc5802\coursework\coursework\coursework1 v2\main.cpp(67): warning C4305: 'argument': truncation from 'int' to 'bool'
-d:\csc5802\coursework\coursework\coursework1 v2\main.cpp(91): warning C4305: 'argument': truncation from 'int' to 'bool'
-d:\csc5802\coursework\coursework\coursework1 v2\main.cpp(116): warning C4305: 'argument': truncation from 'int' to 'bool'
-  Generating Code...
+d:\csc5802\coursework\coursework\coursework1 v2\main.cpp(92): warning C4305: 'argument': truncation from 'int' to 'bool'
+d:\csc5802\coursework\coursework\coursework1 v2\main.cpp(118): warning C4305: 'argument': truncation from 'int' to 'bool'
   CourseWork1 v2.vcxproj -> D:\CSC5802\Coursework\Coursework\Debug\CourseWork1 v2.exe
   CourseWork1 v2.vcxproj -> D:\CSC5802\Coursework\Coursework\Debug\CourseWork1 v2.pdb (Partial PDB)

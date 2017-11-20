@@ -16,7 +16,6 @@ public:
 	virtual ~Renderer(void);
 
 	virtual void RenderScene();
-	void RenderScene2();
 	virtual void UpdateScene(float msec, bool switchScene);
 
 	void resetFade();
@@ -31,7 +30,7 @@ protected:
 	Light * light;
 	Font*	basicFont;
 	Shader *textShader, *floorShader, *skyboxShader, *eyeShader, *regularShader;
-	GLuint cubeMap, cubeMap2;
+	GLuint cubeMap;
 
 
 	void BuildNodeLists(SceneNode * from);
