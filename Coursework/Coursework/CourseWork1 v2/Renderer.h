@@ -8,6 +8,7 @@
 #include "../../nclgl/Frustum.h"
 #include "Cube.h"
 #include "Sphere.h"
+#include "UFO.h"
 #include <algorithm>
 
 class Renderer : public OGLRenderer {
@@ -16,7 +17,7 @@ public:
 	virtual ~Renderer(void);
 
 	virtual void RenderScene();
-	virtual void UpdateScene(float msec, bool switchScene);
+	virtual void UpdateScene(float msec, int switchScene, int scene);
 
 	void resetFade();
 	int getFade();
@@ -29,8 +30,8 @@ protected:
 	Camera * camera;
 	Light * light;
 	Font*	basicFont;
-	Shader *textShader, *floorShader, *skyboxShader, *eyeShader, *regularShader;
-	GLuint cubeMap;
+	Shader *textShader, *floorShader, *skyboxShader, *eyeShader, *regularShader, *sceneGraph;
+	GLuint cubeMap, cubeMap2;
 
 
 	void BuildNodeLists(SceneNode * from);
@@ -38,15 +39,17 @@ protected:
 	void ClearNodeLists();
 	void DrawNodes();
 	void DrawNode(SceneNode * n);
+	void DeleteChildren(SceneNode * n);
+
 	SceneNode * root;
 	Frustum frameFrustum;
 	vector < SceneNode * > transparentNodeList;
 	vector < SceneNode * > nodeList;
 
 	float counter, seconds, seconds2, fade;
-	int frames, fps;
+	int frames, fps, currentScene, switchScene;
 
-	bool switchScene;
 	void showFPS();
 	void drawSkyBox();
+	void drawTerrain();
 };

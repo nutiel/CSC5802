@@ -91,7 +91,7 @@ void ParticleEmitter::Update(float msec)	{
 			//position by multiplying its normalised direction by the
 			//particle speed, and adding the result to the position. Easy!
 
-			p->position += p->direction*(msec*particleSpeed);
+			p->position += p->direction*(msec*particleSpeed*5);
 
 
 			++i;	//Only update our iterator value here.
@@ -127,16 +127,28 @@ Particle* ParticleEmitter::GetFreeParticle()	{
 	//Now we have to reset its values - if it was popped off the
 	//free list, it'll still have the values of its 'previous life'
 
-	p->colour		= Vector4(RAND(),RAND(),RAND(),1.0);
+	p->colour = Vector4(0.8,0.5,0.1,0.7);//Vector4(RAND(),RAND(),RAND(),1.0);
 	p->direction	= initialDirection;
-	p->direction.x += ((RAND()-RAND()) * particleVariance);
-	p->direction.y += ((RAND()-RAND()) * particleVariance);
+	p->direction.x += -1;//((RAND() - RAND()) * particleVariance);
+	p->direction.y += ((RAND() - RAND()) * particleVariance);
 	p->direction.z += ((RAND()-RAND()) * particleVariance);
 
 	p->direction.Normalise();	//Keep its direction normalised!
-	p->position.ToZero();
+	//p->position.ToZero();
+	p->position = *randomPosition();
 
 	return p;	//return the new particle :-)
+}
+
+Vector3* ParticleEmitter::randomPosition(){
+	Vector3 *p = new Vector3();
+	p->ToZero();
+
+	p->x = 0;
+	p->y = RAND() * 300;
+	p->z = RAND() * 300;
+
+	return p;
 }
 
 /*

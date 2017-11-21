@@ -112,6 +112,7 @@ public:
 	Vector3 GetDirection()					{return initialDirection;}
 
 protected:
+	Vector3* randomPosition();
 	/*
 	This is the magic of our free list. If there's a particle 'spare',
 	this function will return that, otherwise it'll return a 'new' one

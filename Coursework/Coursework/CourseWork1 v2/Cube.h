@@ -11,7 +11,7 @@ public:
 
 	static void CreateCube() {
 		OBJMesh* m = new OBJMesh();
-		m->LoadOBJMesh(MESHDIR"cube.obj");
+		m->LoadOBJMesh(MESHDIR"centeredcube.obj");
 		cube = m;
 	}
 	static void DeleteCube() { 

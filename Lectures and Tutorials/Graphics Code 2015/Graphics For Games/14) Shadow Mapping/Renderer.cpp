@@ -16,7 +16,9 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 	shadowShader = new Shader(SHADERDIR"shadowVert.glsl", SHADERDIR"shadowFrag.glsl");
 
 	if (!sceneShader->LinkProgram() || !shadowShader->LinkProgram()) {
-		return;	}	glGenTextures(1, &shadowTex);
+		return;
+	}
+	glGenTextures(1, &shadowTex);
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -86,7 +88,8 @@ void Renderer::DrawShadowScene() {
 
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-	SetCurrentShader(shadowShader);	viewMatrix = Matrix4::BuildViewMatrix(light->GetPosition(), Vector3(0, 0, 0));
+	SetCurrentShader(shadowShader);
+	viewMatrix = Matrix4::BuildViewMatrix(light->GetPosition(), Vector3(0, 0, 0));
 	textureMatrix = biasMatrix *(projMatrix * viewMatrix);
 
 	UpdateShaderMatrices();
@@ -98,7 +101,10 @@ void Renderer::DrawShadowScene() {
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	glViewport(0, 0, width, height);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);}void Renderer::DrawCombinedScene() {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Renderer::DrawCombinedScene() {
 	SetCurrentShader(sceneShader);
 	glUniform1i(glGetUniformLocation(currentShader -> GetProgram(), "diffuseTex"), 0);
 	glUniform1i(glGetUniformLocation(currentShader -> GetProgram(), "bumpTex"), 1);

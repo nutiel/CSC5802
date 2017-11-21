@@ -6,12 +6,14 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 	quad = Mesh::GenerateQuad();
 	Cube::CreateCube();
 	Sphere::CreateSphere();
+	UFO::CreateSphere();
 
 	floorShader = new Shader(SHADERDIR"BumpVertex.glsl", SHADERDIR"BumpFragment.glsl");
 	textShader = new Shader(SHADERDIR"TexturedVertex.glsl", SHADERDIR"TexturedFragment.glsl");
 	skyboxShader = new Shader(SHADERDIR"SkyboxVertex.glsl", SHADERDIR"SkyboxFragment.glsl");
 	eyeShader = new Shader(SHADERDIR"SceneVertex.glsl", SHADERDIR"eyeFilter.glsl");//SceneFragment.glsl
-	regularShader = new Shader(SHADERDIR"SceneVertex.glsl", SHADERDIR"sunFragment.glsl");
+	regularShader = new Shader(SHADERDIR"TexturedVertex.glsl", SHADERDIR"TexturedFragment.glsl");
+	sceneGraph = new Shader(SHADERDIR"SceneVertex.glsl", SHADERDIR"SceneFragment.glsl");
 
 	heightMap = new HeightMap(TEXTUREDIR"terrain.raw");
 	heightMap->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR"Barren Reds.JPG", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
@@ -24,12 +26,12 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 
 	basicFont = new Font(SOIL_load_OGL_texture(TEXTUREDIR"tahoma.tga", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_COMPRESS_TO_DXT), 16, 16);
 
-	//picture used from: https://www.google.co.uk/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwiowMTE0s3XAhUlDcAKHYZ4AU4QjRwIBw&url=https%3A%2F%2F3docean.net%2Fitem%2Fhdr-desert-skies%2F16042303&psig=AOvVaw1ptnkitm5UFFnGpmFQz1u5&ust=1511284188144421
-	/*cubeMap = SOIL_load_OGL_cubemap(TEXTUREDIR"px.png", TEXTUREDIR"nx.png", TEXTUREDIR"py.png",
-		TEXTUREDIR"ny.png", TEXTUREDIR"pz.png", TEXTUREDIR"nz.png", SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);*/
-
 	cubeMap = SOIL_load_OGL_cubemap(TEXTUREDIR"rusted_west.jpg", TEXTUREDIR"rusted_east.jpg", TEXTUREDIR"rusted_up.jpg",
 		TEXTUREDIR"rusted_down.jpg", TEXTUREDIR"rusted_south.jpg", TEXTUREDIR"rusted_north.jpg", SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
+
+	//picture used from: https://www.google.co.uk/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwiowMTE0s3XAhUlDcAKHYZ4AU4QjRwIBw&url=https%3A%2F%2F3docean.net%2Fitem%2Fhdr-desert-skies%2F16042303&psig=AOvVaw1ptnkitm5UFFnGpmFQz1u5&ust=1511284188144421
+	cubeMap2 = SOIL_load_OGL_cubemap(TEXTUREDIR"px.png", TEXTUREDIR"nx.png", TEXTUREDIR"py.png",
+		TEXTUREDIR"ny.png", TEXTUREDIR"pz.png", TEXTUREDIR"nz.png", SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
 
 	if (!cubeMap) {
 		return;
@@ -42,12 +44,16 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 	projMatrix = Matrix4::Perspective(1.0f, 15000.0f, (float)width / (float)height, 45.0f);
 
 	root = new SceneNode();
+	root->SetBoundingRadius(0.0f);
+	//The cube around the camera used for post processing
 	root->AddChild(new Cube(camera->GetPosition()));
 	root->getChildren()[0]->setShader(eyeShader);
 	root->AddChild(new Sphere(light->GetPosition()));
 	root->getChildren()[1]->setShader(regularShader);
-
-	root->SetBoundingRadius(0.0f);
+	root->getChildren()[1]->GetMesh()->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR"water2.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0));
+	UFO *u = new UFO(light->GetPosition());
+	u->setShader(sceneGraph);
+	root->AddChild(u);
 
 	counter = 0.0f;
 	frames = 0;
@@ -55,6 +61,7 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 	seconds2 = 0;
 	fade = 0;
 	switchScene = false;
+	currentScene = 0;
 
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	init = true;
@@ -78,34 +85,80 @@ Renderer ::~Renderer(void) {
 	Sphere::DeleteSphere();
 }
 
-void Renderer::UpdateScene(float msec, bool switchScene) {
+/* switchScene - indicates whether we are switching into a scene, out of it or not switching
+ * scene - is the number of the current scene*/
+void Renderer::UpdateScene(float msec, int switchScene, int scene) {
 	this->switchScene = switchScene;
+
+	if (switchScene == 1 || switchScene == 2) {
+		fade++;
+		currentScene = scene;
+	}
+
+	if (this->switchScene == 2 && switchScene == 1) {
+		DeleteChildren(root);
+		//The cube around the camera used for post processing
+		root->AddChild(new Cube(camera->GetPosition()));
+		root->getChildren()[0]->setShader(eyeShader);
+		root->AddChild(new Sphere(light->GetPosition()));
+		root->getChildren()[1]->setShader(regularShader);
+		root->getChildren()[1]->GetMesh()->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR"water2.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0));
+		/*root->AddChild(new UFO(light->GetPosition()));
+		root->getChildren()[2]->setShader(sceneGraph);*/
+	}
 
 	camera->UpdateCamera(msec);
 	viewMatrix = camera->BuildViewMatrix();
 	frameFrustum.FromMatrix(projMatrix * viewMatrix);
-	root->Update(msec);
-
-	seconds = msec;
-	seconds2 += msec;
-
-	if (switchScene == 1 || switchScene == 2) {
-		fade++;
-	}
-
+	
+	seconds = msec;//Used for calculating fps
+	seconds2 += msec;//used for object movement
+	
+	//Used for the box that covers the camera for post process effects
 	Matrix4 *m = new Matrix4();
 	m->ToIdentity();
-
 	Vector3 *v = new Vector3(camera->GetPosition());
-	v->y -= 150;
 	m->SetPositionVector(*v);
-	light->SetPosition(Vector3(1500.0f*cos(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, 1500.0f*sin(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f)));
 	root->getChildren()[0]->SetTransform(*m);
 
-	m->ToIdentity();
-	*v = light->GetPosition();
-	m->SetPositionVector(*v);
-	root->getChildren()[1]->SetTransform(*m);
+	switch (scene) {
+	case 0:
+		//Moves the light in a circle above the scene
+		light->SetPosition(Vector3(1500.0f*cos(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, 1500.0f*sin(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f)));
+
+		//Used to position the sphere at the position of the light
+		m->ToIdentity();
+		*v = light->GetPosition();
+		m->SetPositionVector(*v);
+		root->getChildren()[1]->SetTransform(*m);
+
+		root->Update(msec);
+		break;
+	case 1:
+		//Moves the light in a circle above the scene
+		light->SetPosition(Vector3(1500.0f*cos(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, 1500.0f*sin(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f)));
+
+		//Used to position the sphere at the position of the light
+		m->ToIdentity();
+		*v = light->GetPosition();
+		m->SetPositionVector(*v);
+		root->getChildren()[1]->SetTransform(*m);
+
+		root->Update(msec);
+		break;
+	case 2:
+		//Moves the light in a circle above the scene
+		light->SetPosition(Vector3(1500.0f*cos(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, 1500.0f*sin(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f)));
+
+		//Used to position the sphere at the position of the light
+		m->ToIdentity();
+		*v = light->GetPosition();
+		m->SetPositionVector(*v);
+		root->getChildren()[1]->SetTransform(*m);
+
+		root->Update(msec);
+		break;
+	}
 
 	delete m;
 	delete v;
@@ -121,15 +174,32 @@ void Renderer::RenderScene() {
 		fps = frames;
 		frames = 0;
 	}
-	ClearNodeLists();
+
 	BuildNodeLists(root);
 	SortNodeLists();
 
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-	showFPS();
-	drawSkyBox();
-	DrawNodes();
+	switch (currentScene) {
+	case 0:
+		showFPS();
+		drawSkyBox();
+		drawTerrain();
+		DrawNodes();
+		break;
+	case 1:
+		showFPS();
+		drawSkyBox();
+		drawTerrain();
+		DrawNodes();
+		break;
+	case 2:
+		showFPS();
+		drawSkyBox();
+		drawTerrain();
+		DrawNodes();
+		break;
+	}
 
 	ClearNodeLists();
 	SwapBuffers();
@@ -153,19 +223,37 @@ void Renderer::showFPS() {
 void Renderer::drawSkyBox() {
 	SetCurrentShader(skyboxShader);
 
+	switch (currentScene) {
+	case 0:
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap);
+		break;
+	case 1:
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap2);
+		break;
+	case 2:
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap);
+		break;
+	}
+
 	UpdateShaderMatrices();
 		
 
 	quad->Draw();
 
 	glUseProgram(0);
+}
+
+void Renderer::drawTerrain() {
 	glDepthMask(GL_TRUE);
 
 	SetCurrentShader(floorShader);
-	glUniform1i(glGetUniformLocation(floorShader->GetProgram(), "diffuseTex"), 0);
-	glUniform1i(glGetUniformLocation(floorShader->GetProgram(), "bumpTex"), 1);
+	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 0);
+	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "bumpTex"), 1);
 
-	glUniform3fv(glGetUniformLocation(floorShader->GetProgram(), "cameraPos"), 1, (float *)& camera->GetPosition());
+	glUniform3fv(glGetUniformLocation(currentShader->GetProgram(), "cameraPos"), 1, (float *)& camera->GetPosition());
 
 
 	glBlendFunc(GL_SRC_ALPHA, GL_NONE);
@@ -295,4 +383,10 @@ int Renderer::getFade() {
 
 void Renderer::resetFade() {
 	fade = 0;
+}
+
+void Renderer::DeleteChildren(SceneNode * from) {
+	for (vector < SceneNode * >::const_iterator i = from->GetChildIteratorStart(); i != from->GetChildIteratorEnd(); ++i) {
+		DeleteChildren((*i));
+	}
 }
