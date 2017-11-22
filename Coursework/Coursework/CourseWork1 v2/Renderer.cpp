@@ -68,10 +68,6 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 	root->AddChild(new Sphere(light->GetPosition()));
 	root->getChildren()[1]->setShader(regularShader);
 	root->getChildren()[1]->GetMesh()->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR"water2.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0));
-	root->AddChild(new Pyramid(camera->GetPosition()));
-	root->getChildren()[2]->setShader(regularShader);
-	root->getChildren()[2]->GetMesh()->SetTexture(brickTexture);
-	root->getChildren()[2]->GetMesh()->SetBumpMap(brickBump);
 
 	/*UFO *u = new UFO(light->GetPosition());
 	u->createChildren();
@@ -117,6 +113,18 @@ Renderer ::~Renderer(void) {
  * scene - is the number of the current scene*/
 void Renderer::UpdateScene(float msec, int switchScene, int scene) {
 
+	if (this->switchScene == 2 && switchScene == 1) {
+		if (scene == 1) {
+			root->AddChild(new Pyramid(light->GetPosition()));
+			root->getChildren()[2]->setShader(regularShader);
+			root->getChildren()[2]->GetMesh()->SetTexture(brickTexture);
+			root->getChildren()[2]->GetMesh()->SetBumpMap(brickBump);
+		}
+		else {
+			root->getChildren().pop_back();
+		}
+	}
+
 	this->switchScene = switchScene;
 
 	if (switchScene == 1 || switchScene == 2) {
@@ -126,10 +134,6 @@ void Renderer::UpdateScene(float msec, int switchScene, int scene) {
 	}
 	else {
 		perform_once = false;
-	}
-
-	if (this->switchScene == 2 && switchScene == 1) {
-		
 	}
 
 	emitter->setAttatchPos(camera->GetPosition());
@@ -442,7 +446,7 @@ void Renderer::DrawParticles() {
 	emitter->SetParticleVariance(1.0f);
 	emitter->SetLaunchParticles(160.0f);
 	emitter->SetParticleSpeed(0.3f);
-	emitter->SetParticleLifetime(20000.0f);;
+	emitter->SetParticleLifetime(2000.0f);;
 	UpdateShaderMatrices();
 
 	emitter->Draw();
