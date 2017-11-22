@@ -30,4 +30,7 @@ protected:
 	MD5Node * hellNode;
 	Mesh * floor;
 	Camera * camera;
-	Light * light;	float seconds;};
+	Light * light;
+
+	float seconds;
+};

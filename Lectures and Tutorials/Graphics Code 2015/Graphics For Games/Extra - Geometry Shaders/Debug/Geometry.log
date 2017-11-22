@@ -1,4 +1,4 @@
-﻿  ParticleEmitter.cpp
-d:\csc5802\lectures and tutorials\graphics code 2015\graphics for games\extra - geometry shaders\particleemitter.cpp(130): warning C4305: 'argument': truncation from 'double' to 'float'
+﻿  Renderer.cpp
+d:\csc5802\lectures and tutorials\graphics code 2015\graphics for games\extra - geometry shaders\renderer.cpp(45): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
   Geometry.vcxproj -> D:\CSC5802\Lectures and Tutorials\Graphics Code 2015\Graphics For Games\Debug\Extra - Geometry Shaders.exe
   Geometry.vcxproj -> D:\CSC5802\Lectures and Tutorials\Graphics Code 2015\Graphics For Games\Debug\Extra - Geometry Shaders.pdb (Partial PDB)

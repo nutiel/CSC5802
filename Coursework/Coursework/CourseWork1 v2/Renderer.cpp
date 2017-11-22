@@ -2,11 +2,29 @@
 
 Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 
-	camera = new Camera(-65.0f, 0.0f, 0.0f, Vector3(RAW_WIDTH * HEIGHTMAP_X/2.0f, 4000, RAW_HEIGHT * HEIGHTMAP_Z + 500));
+	//camera = new Camera(-65.0f, 0.0f, 0.0f, Vector3(RAW_WIDTH * HEIGHTMAP_X/2.0f, 4000, RAW_HEIGHT * HEIGHTMAP_Z + 500));
+	camera = new Camera(0.0f, 0.0f, 0.0f, Vector3(0, 500, 0));
 	quad = Mesh::GenerateQuad();
 	Cube::CreateCube();
 	Sphere::CreateSphere();
-	UFO::CreateSphere();
+	Pyramid::CreatePyramid();
+	//UFO::CreateSphere();
+
+	//Sand texture used from https://naldzgraphics.net/free-seamless-sand-textures/
+	desertTexture = SOIL_load_OGL_texture(TEXTUREDIR"5-desert-sand-seamless.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
+	SetTextureRepeating(desertTexture, true);
+
+	barrenTexture = SOIL_load_OGL_texture(TEXTUREDIR"Barren Reds.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0);
+	SetTextureRepeating(barrenTexture, true);
+
+	barrenBump = SOIL_load_OGL_texture(TEXTUREDIR"Barren RedsDOT3.tga", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
+	SetTextureRepeating(barrenBump, true);
+
+	brickTexture = SOIL_load_OGL_texture(TEXTUREDIR"brick.tga", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0);
+	SetTextureRepeating(brickTexture, true);
+
+	brickBump = SOIL_load_OGL_texture(TEXTUREDIR"brickDOT3.tga", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0);
+	SetTextureRepeating(brickBump, true);
 
 	floorShader = new Shader(SHADERDIR"BumpVertex.glsl", SHADERDIR"BumpFragment.glsl");
 	textShader = new Shader(SHADERDIR"TexturedVertex.glsl", SHADERDIR"TexturedFragment.glsl");
@@ -14,13 +32,15 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 	eyeShader = new Shader(SHADERDIR"SceneVertex.glsl", SHADERDIR"eyeFilter.glsl");//SceneFragment.glsl
 	regularShader = new Shader(SHADERDIR"TexturedVertex.glsl", SHADERDIR"TexturedFragment.glsl");
 	sceneGraph = new Shader(SHADERDIR"SceneVertex.glsl", SHADERDIR"SceneFragment.glsl");
+	particleShader = new Shader(SHADERDIR"particleVertex.glsl", SHADERDIR"particleFragment.glsl", SHADERDIR"particleGeometry.glsl");
 
 	heightMap = new HeightMap(TEXTUREDIR"terrain.raw");
-	heightMap->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR"Barren Reds.JPG", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
-	heightMap->SetBumpMap(SOIL_load_OGL_texture(TEXTUREDIR"Barren RedsDOT3.tga", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
 
-	if (!textShader->LinkProgram() || !floorShader->LinkProgram() || !heightMap->GetTexture() || !heightMap->GetBumpMap() 
-		|| !skyboxShader->LinkProgram() || !eyeShader->LinkProgram() || !regularShader->LinkProgram()) {
+	heightMap->SetTexture(barrenTexture);
+	heightMap->SetBumpMap(barrenBump);
+	
+	if (!textShader->LinkProgram() || !floorShader->LinkProgram() || !heightMap->GetTexture() || !heightMap->GetBumpMap()
+		|| !skyboxShader->LinkProgram() || !eyeShader->LinkProgram() || !regularShader->LinkProgram() || !particleShader->LinkProgram()) {
 		return;
 	}
 
@@ -37,9 +57,6 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 		return;
 	}
 
-	SetTextureRepeating(heightMap->GetTexture(), true);
-	SetTextureRepeating(heightMap->GetBumpMap(), true);
-
 	light = new Light(Vector3((RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, (RAW_HEIGHT * HEIGHTMAP_Z / 2.0f)), Vector4(1, 1, 1, 1), (RAW_WIDTH * HEIGHTMAP_X) / 2.0f);
 	projMatrix = Matrix4::Perspective(1.0f, 15000.0f, (float)width / (float)height, 45.0f);
 
@@ -51,17 +68,26 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 	root->AddChild(new Sphere(light->GetPosition()));
 	root->getChildren()[1]->setShader(regularShader);
 	root->getChildren()[1]->GetMesh()->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR"water2.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0));
-	UFO *u = new UFO(light->GetPosition());
+	root->AddChild(new Pyramid(camera->GetPosition()));
+	root->getChildren()[2]->setShader(regularShader);
+	root->getChildren()[2]->GetMesh()->SetTexture(brickTexture);
+	root->getChildren()[2]->GetMesh()->SetBumpMap(brickBump);
+
+	/*UFO *u = new UFO(light->GetPosition());
+	u->createChildren();
 	u->setShader(sceneGraph);
-	root->AddChild(u);
+	root->AddChild(u);*/
 
 	counter = 0.0f;
 	frames = 0;
 	fps = 0;
 	seconds2 = 0;
 	fade = 0;
-	switchScene = false;
+	switchScene = 0;
 	currentScene = 0;
+
+	//A new particle emitter!
+	emitter = new ParticleEmitter();
 
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	init = true;
@@ -79,34 +105,35 @@ Renderer ::~Renderer(void) {
 	delete regularShader;
 	delete root;
 	delete quad;
+	delete emitter;
 
 	currentShader = NULL;
 	Cube::DeleteCube();
 	Sphere::DeleteSphere();
+	Pyramid::DeletePyramid();
 }
 
 /* switchScene - indicates whether we are switching into a scene, out of it or not switching
  * scene - is the number of the current scene*/
 void Renderer::UpdateScene(float msec, int switchScene, int scene) {
+
 	this->switchScene = switchScene;
 
 	if (switchScene == 1 || switchScene == 2) {
 		fade++;
 		currentScene = scene;
+		perform_once = true;
+	}
+	else {
+		perform_once = false;
 	}
 
 	if (this->switchScene == 2 && switchScene == 1) {
-		DeleteChildren(root);
-		//The cube around the camera used for post processing
-		root->AddChild(new Cube(camera->GetPosition()));
-		root->getChildren()[0]->setShader(eyeShader);
-		root->AddChild(new Sphere(light->GetPosition()));
-		root->getChildren()[1]->setShader(regularShader);
-		root->getChildren()[1]->GetMesh()->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR"water2.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0));
-		/*root->AddChild(new UFO(light->GetPosition()));
-		root->getChildren()[2]->setShader(sceneGraph);*/
+		
 	}
 
+	emitter->setAttatchPos(camera->GetPosition());
+	emitter->Update(msec);
 	camera->UpdateCamera(msec);
 	viewMatrix = camera->BuildViewMatrix();
 	frameFrustum.FromMatrix(projMatrix * viewMatrix);
@@ -121,23 +148,31 @@ void Renderer::UpdateScene(float msec, int switchScene, int scene) {
 	m->SetPositionVector(*v);
 	root->getChildren()[0]->SetTransform(*m);
 
-	switch (scene) {
+	switch (currentScene) {
 	case 0:
-		//Moves the light in a circle above the scene
-		light->SetPosition(Vector3(1500.0f*cos(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, 1500.0f*sin(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f)));
+		if (perform_once) {
+			heightMap->SetTexture(barrenTexture);
+			heightMap->SetBumpMap(barrenBump);
+		}
 
 		//Used to position the sphere at the position of the light
 		m->ToIdentity();
-		*v = light->GetPosition();
+		*v = Vector3(1500.0f*cos(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, 1500.0f*sin(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f));
 		m->SetPositionVector(*v);
 		root->getChildren()[1]->SetTransform(*m);
 
 		root->Update(msec);
 		break;
 	case 1:
+
+		if (perform_once) {
+			heightMap->SetTexture(desertTexture);
+			heightMap->SetBumpMap(0);
+		}
+
 		//Moves the light in a circle above the scene
 		light->SetPosition(Vector3(1500.0f*cos(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, 1500.0f*sin(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f)));
-
+		light->SetRadius((RAW_WIDTH * HEIGHTMAP_X));
 		//Used to position the sphere at the position of the light
 		m->ToIdentity();
 		*v = light->GetPosition();
@@ -147,6 +182,12 @@ void Renderer::UpdateScene(float msec, int switchScene, int scene) {
 		root->Update(msec);
 		break;
 	case 2:
+		if (perform_once) {
+			camera->SetPosition(Vector3((RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, (RAW_HEIGHT * HEIGHTMAP_Z / 2.0f)));
+			heightMap->SetTexture(barrenTexture);
+			heightMap->SetBumpMap(barrenBump);
+		}
+		
 		//Moves the light in a circle above the scene
 		light->SetPosition(Vector3(1500.0f*cos(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, 1500.0f*sin(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f)));
 
@@ -174,7 +215,7 @@ void Renderer::RenderScene() {
 		fps = frames;
 		frames = 0;
 	}
-
+	
 	BuildNodeLists(root);
 	SortNodeLists();
 
@@ -186,12 +227,14 @@ void Renderer::RenderScene() {
 		drawSkyBox();
 		drawTerrain();
 		DrawNodes();
+		
 		break;
 	case 1:
 		showFPS();
 		drawSkyBox();
 		drawTerrain();
 		DrawNodes();
+		DrawParticles();
 		break;
 	case 2:
 		showFPS();
@@ -324,10 +367,15 @@ void Renderer::DrawNode(SceneNode * n) {
 
 		glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "switchScene"), switchScene);
 
+		glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "scene"), currentScene);
+
 		n->Draw(*this);
 	}
 
 	glUseProgram(0);
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
 }
 
 void Renderer::BuildNodeLists(SceneNode * from) {
@@ -385,8 +433,22 @@ void Renderer::resetFade() {
 	fade = 0;
 }
 
-void Renderer::DeleteChildren(SceneNode * from) {
-	for (vector < SceneNode * >::const_iterator i = from->GetChildIteratorStart(); i != from->GetChildIteratorEnd(); ++i) {
-		DeleteChildren((*i));
-	}
+void Renderer::DrawParticles() {
+	SetCurrentShader(particleShader);
+	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 0);
+
+	SetShaderParticleSize(emitter->GetParticleSize());
+	emitter->SetParticleSize(10.0f);
+	emitter->SetParticleVariance(1.0f);
+	emitter->SetLaunchParticles(160.0f);
+	emitter->SetParticleSpeed(0.3f);
+	emitter->SetParticleLifetime(20000.0f);;
+	UpdateShaderMatrices();
+
+	emitter->Draw();
+	glUseProgram(0);
+}
+
+void Renderer::SetShaderParticleSize(float f) {
+	glUniform1f(glGetUniformLocation(currentShader->GetProgram(), "particleSize"), f);
 }

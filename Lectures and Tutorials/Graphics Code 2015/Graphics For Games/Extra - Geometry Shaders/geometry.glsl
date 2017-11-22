@@ -84,7 +84,7 @@ void main() {
 		//top right
 		gl_Position = gl_in[ i ].gl_Position;
 		gl_Position.x += particleSize;
-		gl_Position.y += particleSize/5.0;
+		gl_Position.y += particleSize/2.0;
 		OUT.texCoord = vec2(1,0);
 
 		//When we've created a vertex, we call the glsl in-built
@@ -96,21 +96,21 @@ void main() {
 		//Top Left
 		gl_Position = gl_in[ i ].gl_Position;
 		gl_Position.x -= particleSize;
-		gl_Position.y += particleSize/5.0;
+		gl_Position.y += particleSize/2.0;
 		OUT.texCoord = vec2(0,0);
 		EmitVertex();
 
 		//bottom right
 		gl_Position = gl_in[ i ].gl_Position;
 		gl_Position.x += particleSize;
-		gl_Position.y -= particleSize/5.0;
+		gl_Position.y -= particleSize/2.0;
 		OUT.texCoord = vec2(1,1);
 		EmitVertex();
 
 		//bottom Left
 		gl_Position = gl_in[ i ].gl_Position;
 		gl_Position.x -= particleSize;
-		gl_Position.y -= particleSize/5.0;
+		gl_Position.y -= particleSize/2.0;
 		OUT.texCoord = vec2(0,1);
 		EmitVertex();
 

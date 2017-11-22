@@ -4,6 +4,7 @@ uniform sampler2D diffuseTex;
 uniform int useTexture;
 uniform float iTime;
 uniform int switchScene;
+uniform int scene;
 
 in Vertex {
 	vec2 texCoord ;
@@ -32,6 +33,15 @@ void main ( void ) {
 	}
 	else{
 		combination = IN.colour;
+		
+		if(scene == 1){
+			
+			gl_FragColor.a = 0.15;
+			
+			vec3 noise = vec3(0.9,0.3,0.2);
+			
+			combination = vec4(noise.xyz, gl_FragColor.a);
+		}
 	}
 	
 	gl_FragColor = combination;

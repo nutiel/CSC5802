@@ -18,6 +18,8 @@ public:
 		delete sphere;
 	}
 
+	void createChildren();
+
 protected:
 	static Mesh * sphere;
 	SceneNode *top, *body;

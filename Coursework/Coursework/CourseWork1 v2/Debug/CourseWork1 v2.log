@@ -1,7 +1,8 @@
 ﻿  Renderer.cpp
-d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(127): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
-d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(139): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
-d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(151): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
-d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(381): warning C4244: 'return': conversion from 'float' to 'int', possible loss of data
+d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(160): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(174): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(192): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(429): warning C4244: 'return': conversion from 'float' to 'int', possible loss of data
+d:\csc5802\coursework\coursework\coursework1 v2\renderer.cpp(443): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
   CourseWork1 v2.vcxproj -> D:\CSC5802\Coursework\Coursework\Debug\CourseWork1 v2.exe
   CourseWork1 v2.vcxproj -> D:\CSC5802\Coursework\Coursework\Debug\CourseWork1 v2.pdb (Partial PDB)

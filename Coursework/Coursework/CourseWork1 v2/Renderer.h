@@ -6,8 +6,10 @@
 #include "../../nclgl/textmesh.h"
 #include "../../nclgl/SceneNode.h"
 #include "../../nclgl/Frustum.h"
+#include"ParticleEmitter.h"
 #include "Cube.h"
 #include "Sphere.h"
+#include "Pyramid.h"
 #include "UFO.h"
 #include <algorithm>
 
@@ -30,17 +32,20 @@ protected:
 	Camera * camera;
 	Light * light;
 	Font*	basicFont;
-	Shader *textShader, *floorShader, *skyboxShader, *eyeShader, *regularShader, *sceneGraph;
+	Shader *textShader, *floorShader, *skyboxShader, *eyeShader, *regularShader, *sceneGraph, *particleShader;
 	GLuint cubeMap, cubeMap2;
-
+	GLuint desertTexture, barrenTexture, brickTexture;
+	GLuint barrenBump, brickBump;
 
 	void BuildNodeLists(SceneNode * from);
 	void SortNodeLists();
 	void ClearNodeLists();
 	void DrawNodes();
 	void DrawNode(SceneNode * n);
-	void DeleteChildren(SceneNode * n);
+	void DrawParticles();
+	void SetShaderParticleSize(float f);	//And a new setter
 
+	ParticleEmitter*	emitter;	//A single particle emitter
 	SceneNode * root;
 	Frustum frameFrustum;
 	vector < SceneNode * > transparentNodeList;
@@ -48,6 +53,8 @@ protected:
 
 	float counter, seconds, seconds2, fade;
 	int frames, fps, currentScene, switchScene;
+
+	bool perform_once;
 
 	void showFPS();
 	void drawSkyBox();
