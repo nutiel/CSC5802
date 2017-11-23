@@ -1,7 +1,4 @@
 ﻿  Renderer.cpp
 Renderer.cpp(70): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
-  Generating Code...
-  Skipping... (no relevant changes detected)
-  tutorial14.cpp
   tutorial14.vcxproj -> D:\CSC5802\Lectures and Tutorials\Graphics Code 2015\Graphics For Games\Debug\Tutorial 14 - Shadow Mapping.exe
   tutorial14.vcxproj -> D:\CSC5802\Lectures and Tutorials\Graphics Code 2015\Graphics For Games\Debug\Tutorial 14 - Shadow Mapping.pdb (Full PDB)

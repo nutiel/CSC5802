@@ -122,17 +122,26 @@ void Renderer::GenerateScreenTexture(GLuint & into, bool depth) {
 
 	glTexImage2D(GL_TEXTURE_2D, 0, depth ? GL_DEPTH_COMPONENT24 : GL_RGBA8, width, height, 0, depth ? GL_DEPTH_COMPONENT : GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
-	glBindTexture(GL_TEXTURE_2D, 0);}void Renderer::UpdateScene(float msec) {
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void Renderer::UpdateScene(float msec) {
 	camera -> UpdateCamera(msec);
 	viewMatrix = camera -> BuildViewMatrix();
-	rotation = msec * 0.01f;}void Renderer::RenderScene() {
+	rotation = msec * 0.01f;
+}
+
+void Renderer::RenderScene() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 	FillBuffers();
 	DrawPointLights();
 	CombineBuffers();
-	SwapBuffers();}void Renderer::FillBuffers() {
+	SwapBuffers();
+}
+
+void Renderer::FillBuffers() {
 	glBindFramebuffer(GL_FRAMEBUFFER, bufferFBO);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	
@@ -147,7 +156,10 @@ void Renderer::GenerateScreenTexture(GLuint & into, bool depth) {
 	heightMap -> Draw();
 	
 	glUseProgram(0);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);}void Renderer::DrawPointLights() {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Renderer::DrawPointLights() {
 	SetCurrentShader(pointlightShader);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, pointLightFBO);

@@ -11,7 +11,7 @@ public:
 
 	static void CreateSphere() {
 		OBJMesh* m = new OBJMesh();
-		m->LoadOBJMesh(MESHDIR"ico.obj");
+		m->LoadOBJMesh(MESHDIR"shpere.obj");
 		sphere = m;
 	}
 	static void DeleteSphere() {

@@ -120,7 +120,6 @@
     <ClCompile Include="Pyramid.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Sphere.cpp" />
-    <ClCompile Include="UFO.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Cube.h" />
@@ -128,7 +127,6 @@
     <ClInclude Include="Pyramid.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Sphere.h" />
-    <ClInclude Include="UFO.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

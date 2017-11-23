@@ -3,12 +3,11 @@
 Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 
 	//camera = new Camera(-65.0f, 0.0f, 0.0f, Vector3(RAW_WIDTH * HEIGHTMAP_X/2.0f, 4000, RAW_HEIGHT * HEIGHTMAP_Z + 500));
-	camera = new Camera(0.0f, 0.0f, 0.0f, Vector3(0, 500, 0));
+	camera = new Camera(0.0f, 230.0f, 0.0f, Vector3(0, 500, 0));
 	quad = Mesh::GenerateQuad();
 	Cube::CreateCube();
 	Sphere::CreateSphere();
 	Pyramid::CreatePyramid();
-	//UFO::CreateSphere();
 
 	//Sand texture used from https://naldzgraphics.net/free-seamless-sand-textures/
 	desertTexture = SOIL_load_OGL_texture(TEXTUREDIR"5-desert-sand-seamless.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
@@ -26,53 +25,101 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 	brickBump = SOIL_load_OGL_texture(TEXTUREDIR"brickDOT3.tga", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0);
 	SetTextureRepeating(brickBump, true);
 
+	//Bush texture used from https://www.google.co.uk/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwijwqu5v9XXAhWKHsAKHTqzAIoQjRwIBw&url=https%3A%2F%2Ffreestocktextures.com%2Ftexture%2Fnature-bush-green%2C688.html&psig=AOvVaw1wMxeE3p6Weccs4VBBVATk&ust=1511553962355798
+	bushTexture = SOIL_load_OGL_texture(TEXTUREDIR"bush.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0);
+	SetTextureRepeating(bushTexture, true);
+
+	//---Shaders---//
+
 	floorShader = new Shader(SHADERDIR"BumpVertex.glsl", SHADERDIR"BumpFragment.glsl");
 	textShader = new Shader(SHADERDIR"TexturedVertex.glsl", SHADERDIR"TexturedFragment.glsl");
 	skyboxShader = new Shader(SHADERDIR"SkyboxVertex.glsl", SHADERDIR"SkyboxFragment.glsl");
-	eyeShader = new Shader(SHADERDIR"SceneVertex.glsl", SHADERDIR"eyeFilter.glsl");//SceneFragment.glsl
-	regularShader = new Shader(SHADERDIR"TexturedVertex.glsl", SHADERDIR"TexturedFragment.glsl");
+	eyeShader = new Shader(SHADERDIR"SceneVertex.glsl", SHADERDIR"eyeFilter.glsl");
 	sceneGraph = new Shader(SHADERDIR"SceneVertex.glsl", SHADERDIR"SceneFragment.glsl");
 	particleShader = new Shader(SHADERDIR"particleVertex.glsl", SHADERDIR"particleFragment.glsl", SHADERDIR"particleGeometry.glsl");
+	reflectShader = new Shader(SHADERDIR"PerPixelVertex.glsl", SHADERDIR"ReflectFragment.glsl");
+	lightShader = new Shader(SHADERDIR"PerPixelVertex.glsl", SHADERDIR"PerPixelFragment.glsl");
 
 	heightMap = new HeightMap(TEXTUREDIR"terrain.raw");
-
+	
 	heightMap->SetTexture(barrenTexture);
 	heightMap->SetBumpMap(barrenBump);
-	
+	heightMap->GenerateHeights(1.0, true);
+
 	if (!textShader->LinkProgram() || !floorShader->LinkProgram() || !heightMap->GetTexture() || !heightMap->GetBumpMap()
-		|| !skyboxShader->LinkProgram() || !eyeShader->LinkProgram() || !regularShader->LinkProgram() || !particleShader->LinkProgram()) {
+		|| !skyboxShader->LinkProgram() || !eyeShader->LinkProgram() || !particleShader->LinkProgram() || !reflectShader->LinkProgram() 
+		|| !lightShader->LinkProgram()) {
 		return;
 	}
+
+	quad->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR"water3.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
+	quad->SetBumpMap(barrenBump);
 
 	basicFont = new Font(SOIL_load_OGL_texture(TEXTUREDIR"tahoma.tga", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_COMPRESS_TO_DXT), 16, 16);
 
 	cubeMap = SOIL_load_OGL_cubemap(TEXTUREDIR"rusted_west.jpg", TEXTUREDIR"rusted_east.jpg", TEXTUREDIR"rusted_up.jpg",
 		TEXTUREDIR"rusted_down.jpg", TEXTUREDIR"rusted_south.jpg", TEXTUREDIR"rusted_north.jpg", SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
 
-	//picture used from: https://www.google.co.uk/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwiowMTE0s3XAhUlDcAKHYZ4AU4QjRwIBw&url=https%3A%2F%2F3docean.net%2Fitem%2Fhdr-desert-skies%2F16042303&psig=AOvVaw1ptnkitm5UFFnGpmFQz1u5&ust=1511284188144421
+	//picture used from: https://www.google.co.uk/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjKzoWnp9XXAhVDL8AKHb9PDp0QjRwIBw&url=http%3A%2F%2Fkeywordsuggest.org%2Fgallery%2F80577.html&psig=AOvVaw36C-gyD9CRc5F1-0wuUrfS&ust=1511547424488281
 	cubeMap2 = SOIL_load_OGL_cubemap(TEXTUREDIR"px.png", TEXTUREDIR"nx.png", TEXTUREDIR"py.png",
 		TEXTUREDIR"ny.png", TEXTUREDIR"pz.png", TEXTUREDIR"nz.png", SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
 
-	if (!cubeMap) {
+	//picture used from: https://www.google.co.uk/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwi99ceLqtXXAhXID8AKHUCtAGcQjRwIBw&url=http%3A%2F%2Fkvkh.16mb.com%2Fportfolio%2Ftextures%2F&psig=AOvVaw0yG7zayzkctNeDmOd-WJ96&ust=1511548211728105
+	cubeMap3 = SOIL_load_OGL_cubemap(TEXTUREDIR"spx.png", TEXTUREDIR"snx.png", TEXTUREDIR"spy.png",
+		TEXTUREDIR"sny.png", TEXTUREDIR"spz.png", TEXTUREDIR"snz.png", SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0);
+
+	if (!cubeMap || !quad -> GetTexture()) {
 		return;
 	}
+
+	SetTextureRepeating(quad -> GetTexture(), true);
 
 	light = new Light(Vector3((RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, (RAW_HEIGHT * HEIGHTMAP_Z / 2.0f)), Vector4(1, 1, 1, 1), (RAW_WIDTH * HEIGHTMAP_X) / 2.0f);
 	projMatrix = Matrix4::Perspective(1.0f, 15000.0f, (float)width / (float)height, 45.0f);
 
-	root = new SceneNode();
-	root->SetBoundingRadius(0.0f);
-	//The cube around the camera used for post processing
-	root->AddChild(new Cube(camera->GetPosition()));
-	root->getChildren()[0]->setShader(eyeShader);
-	root->AddChild(new Sphere(light->GetPosition()));
-	root->getChildren()[1]->setShader(regularShader);
-	root->getChildren()[1]->GetMesh()->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR"water2.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0));
+	//---First Scene---//
 
-	/*UFO *u = new UFO(light->GetPosition());
-	u->createChildren();
-	u->setShader(sceneGraph);
-	root->AddChild(u);*/
+	root1 = new SceneNode();
+	root1->SetBoundingRadius(0.0f);
+	//The cube around the camera used for post processing
+	root1->AddChild(new Cube(camera->GetPosition()));
+	root1->getChildren()[0]->setShader(eyeShader);
+	root1->AddChild(new Sphere(light->GetPosition()));
+	root1->getChildren()[1]->setShader(textShader);
+	root1->getChildren()[1]->GetMesh()->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR"water2.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0));
+
+	//---Second Scene---//
+	root2 = new SceneNode();
+	root2->SetBoundingRadius(0.0f);
+	//The cube around the camera used for post processing
+	root2->AddChild(new Cube(camera->GetPosition()));
+	root2->getChildren()[0]->setShader(eyeShader);
+	root2->AddChild(new Sphere(light->GetPosition()));
+	root2->getChildren()[1]->setShader(textShader);
+	root2->getChildren()[1]->GetMesh()->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR"water2.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0));
+	root2->AddChild(new Pyramid(light->GetPosition()));
+	root2->getChildren()[2]->setShader(textShader);
+	root2->getChildren()[2]->GetMesh()->SetTexture(brickTexture);
+	root2->getChildren()[2]->GetMesh()->SetBumpMap(brickBump);
+
+	//---Third Scene---//
+	root3 = new SceneNode();
+	root3->SetBoundingRadius(0.0f);
+	//The cube around the camera used for post processing
+	root3->AddChild(new Cube(camera->GetPosition()));
+	root3->getChildren()[0]->setShader(eyeShader);
+
+	hellData = new MD5FileData(MESHDIR"hellknight.md5mesh");
+	hellNode = new MD5Node(*hellData);
+	
+	hellData -> AddAnim(MESHDIR"idle2.md5anim");
+	hellNode -> PlayAnim(MESHDIR"idle2.md5anim");
+	
+	sceneShader = new Shader(SHADERDIR"shadowscenevert.glsl", SHADERDIR"shadowscenefrag.glsl");
+	shadowShader = new Shader(SHADERDIR"shadowVert.glsl", SHADERDIR"shadowFrag.glsl");
+	if (!sceneShader -> LinkProgram() || !shadowShader -> LinkProgram()) {
+		return;
+	}
 
 	counter = 0.0f;
 	frames = 0;
@@ -81,15 +128,42 @@ Renderer::Renderer(Window & parent) : OGLRenderer(parent) {
 	fade = 0;
 	switchScene = 0;
 	currentScene = 0;
+	grow = 0;
 
 	//A new particle emitter!
 	emitter = new ParticleEmitter();
 
+	glGenTextures(1, &shadowTex);
+	glBindTexture(GL_TEXTURE_2D, shadowTex);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOWSIZE, SHADOWSIZE, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+	
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glGenFramebuffers(1, &shadowFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowTex, 0);
+	glDrawBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	floor = Mesh::GenerateQuad();
+	floor -> SetTexture(SOIL_load_OGL_texture(TEXTUREDIR"brick.tga", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
+	floor -> SetBumpMap(SOIL_load_OGL_texture(TEXTUREDIR"brickDOT3.tga", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	init = true;
+
+	waterRotate = 0.0f;
 }
 
 Renderer ::~Renderer(void) {
+
+	glDeleteTextures(1, &shadowTex);
+	glDeleteFramebuffers(1, &shadowFBO);
+
 	delete camera;
 	delete heightMap;
 	delete light;
@@ -99,10 +173,16 @@ Renderer ::~Renderer(void) {
 	delete textShader;
 	delete eyeShader;
 	delete regularShader;
-	delete root;
+	delete reflectShader;
+	delete lightShader;
+	delete root1;
+	delete root2;
+	delete root3;
 	delete quad;
-	delete emitter;
-
+	delete emitter;	delete hellData;
+	delete hellNode;
+	delete floor;	delete sceneShader;
+	delete shadowShader;
 	currentShader = NULL;
 	Cube::DeleteCube();
 	Sphere::DeleteSphere();
@@ -112,17 +192,13 @@ Renderer ::~Renderer(void) {
 /* switchScene - indicates whether we are switching into a scene, out of it or not switching
  * scene - is the number of the current scene*/
 void Renderer::UpdateScene(float msec, int switchScene, int scene) {
-
+	Matrix4 *transform = new Matrix4();
 	if (this->switchScene == 2 && switchScene == 1) {
-		if (scene == 1) {
-			root->AddChild(new Pyramid(light->GetPosition()));
-			root->getChildren()[2]->setShader(regularShader);
-			root->getChildren()[2]->GetMesh()->SetTexture(brickTexture);
-			root->getChildren()[2]->GetMesh()->SetBumpMap(brickBump);
-		}
-		else {
-			root->getChildren().pop_back();
-		}
+		perform_once = true;
+
+	}
+	else {
+		perform_once = false;
 	}
 
 	this->switchScene = switchScene;
@@ -130,10 +206,6 @@ void Renderer::UpdateScene(float msec, int switchScene, int scene) {
 	if (switchScene == 1 || switchScene == 2) {
 		fade++;
 		currentScene = scene;
-		perform_once = true;
-	}
-	else {
-		perform_once = false;
 	}
 
 	emitter->setAttatchPos(camera->GetPosition());
@@ -142,6 +214,7 @@ void Renderer::UpdateScene(float msec, int switchScene, int scene) {
 	viewMatrix = camera->BuildViewMatrix();
 	frameFrustum.FromMatrix(projMatrix * viewMatrix);
 	
+	waterRotate += msec / 1000.0f;
 	seconds = msec;//Used for calculating fps
 	seconds2 += msec;//used for object movement
 	
@@ -150,61 +223,76 @@ void Renderer::UpdateScene(float msec, int switchScene, int scene) {
 	m->ToIdentity();
 	Vector3 *v = new Vector3(camera->GetPosition());
 	m->SetPositionVector(*v);
-	root->getChildren()[0]->SetTransform(*m);
 
 	switch (currentScene) {
 	case 0:
 		if (perform_once) {
+			camera->SetYaw(230.0);
 			heightMap->SetTexture(barrenTexture);
 			heightMap->SetBumpMap(barrenBump);
+			heightMap->GenerateHeights(1.0f, true);
 		}
+
+		root1->getChildren()[0]->SetTransform(*m);
 
 		//Used to position the sphere at the position of the light
 		m->ToIdentity();
 		*v = Vector3(1500.0f*cos(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, 1500.0f*sin(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f));
 		m->SetPositionVector(*v);
-		root->getChildren()[1]->SetTransform(*m);
+		root1->getChildren()[1]->SetTransform(*m);
 
-		root->Update(msec);
+		root1->Update(msec);
 		break;
 	case 1:
 
+		*transform = Matrix4::Translation(Vector3(1550, 400, 2230)) * Matrix4::Rotation(90.0, Vector3(-1, 0, 0));
+
 		if (perform_once) {
+			camera->SetPosition(Vector3(2385, 330, 2015));
+			camera->SetYaw(100.0);
 			heightMap->SetTexture(desertTexture);
 			heightMap->SetBumpMap(0);
+			heightMap->GenerateHeights(1.0f, true);
 		}
 
+		root2->getChildren()[0]->SetTransform(*m);
 		//Moves the light in a circle above the scene
 		light->SetPosition(Vector3(1500.0f*cos(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, 1500.0f*sin(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f)));
 		light->SetRadius((RAW_WIDTH * HEIGHTMAP_X));
 		//Used to position the sphere at the position of the light
 		m->ToIdentity();
 		*v = light->GetPosition();
-		m->SetPositionVector(*v);
-		root->getChildren()[1]->SetTransform(*m);
+		m->SetPositionVector(Vector3(1700,600,2415));
+		root2->getChildren()[1]->SetTransform(*m);
 
-		root->Update(msec);
+		root2->getChildren()[2]->SetTransform(*transform);
+		root2->getChildren()[2]->SetModelScale(Vector3(400,500,400));
+
+		root2->Update(msec);
 		break;
 	case 2:
+
+		//hellNode->Update(msec);
+
 		if (perform_once) {
 			camera->SetPosition(Vector3((RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, (RAW_HEIGHT * HEIGHTMAP_Z / 2.0f)));
 			heightMap->SetTexture(barrenTexture);
 			heightMap->SetBumpMap(barrenBump);
+			heightMap->GenerateHeights(0,  true);
 		}
 		
+		if (grow < 1.0 && grow >= -1) {
+			grow += 0.001;
+			heightMap->GenerateHeights(grow, false);
+		}
+
+		root3->getChildren()[0]->SetTransform(*m);
 		//Moves the light in a circle above the scene
 		light->SetPosition(Vector3(1500.0f*cos(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, 1500.0f*sin(seconds2 / 2000.0) + (RAW_HEIGHT * HEIGHTMAP_X / 2.0f)));
-
-		//Used to position the sphere at the position of the light
-		m->ToIdentity();
-		*v = light->GetPosition();
-		m->SetPositionVector(*v);
-		root->getChildren()[1]->SetTransform(*m);
-
-		root->Update(msec);
+		root3->Update(msec);
 		break;
 	}
-
+	delete transform;
 	delete m;
 	delete v;
 }
@@ -219,32 +307,43 @@ void Renderer::RenderScene() {
 		fps = frames;
 		frames = 0;
 	}
-	
-	BuildNodeLists(root);
-	SortNodeLists();
 
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 	switch (currentScene) {
 	case 0:
-		showFPS();
+		BuildNodeLists(root1);
+		SortNodeLists();
+
 		drawSkyBox();
 		drawTerrain();
+		DrawWater();
 		DrawNodes();
-		
+		showFPS();
+
 		break;
 	case 1:
-		showFPS();
+		BuildNodeLists(root2);
+		SortNodeLists();
+
 		drawSkyBox();
 		drawTerrain();
 		DrawNodes();
 		DrawParticles();
+		showFPS();
 		break;
 	case 2:
-		showFPS();
+		/*glEnable(GL_DEPTH_TEST);
+		DrawShadowScene(); // First render pass ...
+		DrawCombinedScene(); // Second render pass ...
+		glDisable(GL_DEPTH_TEST);*/
+		BuildNodeLists(root3);
+		SortNodeLists();
+
 		drawSkyBox();
 		drawTerrain();
 		DrawNodes();
+		showFPS();
 		break;
 	}
 
@@ -252,6 +351,75 @@ void Renderer::RenderScene() {
 	SwapBuffers();
 }
 
+void Renderer::DrawShadowScene() {
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+	
+	glClear(GL_DEPTH_BUFFER_BIT);
+	
+	glViewport(0, 0, SHADOWSIZE, SHADOWSIZE);
+	
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	
+	SetCurrentShader(shadowShader);
+	Matrix4 tview = viewMatrix;
+	viewMatrix = Matrix4::BuildViewMatrix(
+	light -> GetPosition(), Vector3(0, 0, 0));
+	textureMatrix = biasMatrix *(projMatrix * viewMatrix);
+	
+	UpdateShaderMatrices();
+	
+	DrawFloor();
+	DrawMesh();
+	
+	glUseProgram(0);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glViewport(0, 0, width, height);
+	
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	viewMatrix = tview;
+}
+
+void Renderer::DrawCombinedScene() {
+	SetCurrentShader(sceneShader);
+	glUniform1i(glGetUniformLocation(currentShader -> GetProgram(), "diffuseTex"), 0);
+	glUniform1i(glGetUniformLocation(currentShader -> GetProgram(), "bumpTex"), 1);
+	glUniform1i(glGetUniformLocation(currentShader -> GetProgram(), "shadowTex"), 2);
+	
+	glUniform3fv(glGetUniformLocation(currentShader -> GetProgram(), "cameraPos"), 1, (float *)& camera -> GetPosition());
+	
+	SetShaderLight(*light);
+	
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, shadowTex);
+	Matrix4 tview = viewMatrix;
+	viewMatrix = camera -> BuildViewMatrix();
+	UpdateShaderMatrices();
+	
+	DrawFloor();
+	DrawMesh();
+	
+	glUseProgram(0);	viewMatrix = tview;}void Renderer::DrawMesh() {
+	modelMatrix.ToIdentity();
+	
+	Matrix4 tempMatrix = textureMatrix * modelMatrix;
+	
+	glUniformMatrix4fv(glGetUniformLocation(currentShader -> GetProgram(), "textureMatrix"), 1, false, *& tempMatrix.values);
+	
+	glUniformMatrix4fv(glGetUniformLocation(currentShader -> GetProgram(), "modelMatrix"), 1, false, *& modelMatrix.values);
+	
+	hellNode -> Draw(*this);
+	
+}
+
+void Renderer::DrawFloor() {
+	modelMatrix = Matrix4::Rotation(90, Vector3(1, 0, 0)) * Matrix4::Scale(Vector3(450, 450, 1));
+	Matrix4 tempMatrix = textureMatrix * modelMatrix;
+	
+	glUniformMatrix4fv(glGetUniformLocation(currentShader -> GetProgram(), "textureMatrix"), 1, false, *& tempMatrix.values);
+	glUniformMatrix4fv(glGetUniformLocation(currentShader -> GetProgram(), "modelMatrix"), 1, false, *& modelMatrix.values);
+	
+	floor -> Draw();}
 void Renderer::showFPS() {
 	SetCurrentShader(textShader);
 	glUniform1i(glGetUniformLocation(textShader->GetProgram(), "diffuseTex"), 0);
@@ -261,10 +429,17 @@ void Renderer::showFPS() {
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-	DrawText("FPS: " + std::to_string(fps), Vector3(0, 0, 0), 16.0f);
-	glUseProgram(0);
 	glDepthMask(GL_FALSE);
+	DrawText("FPS: " + std::to_string(fps), Vector3(0, 0, 0), 16.0f);
+
+	DrawText("Camera Pos: " + std::to_string((int)camera->GetPosition().x) + ", " +
+		std::to_string((int)camera->GetPosition().y) + ", " +
+		std::to_string((int)camera->GetPosition().z), Vector3(0, 16.0, 0), 16.0f);
+	DrawText("Yaw: " + std::to_string((int)camera->GetYaw()) + " Pitch: " + std::to_string((int)camera->GetPitch()), Vector3(0, 32.0, 0), 16.0f);
+	glUseProgram(0);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDepthMask(GL_TRUE);
 }
 
 void Renderer::drawSkyBox() {
@@ -281,7 +456,7 @@ void Renderer::drawSkyBox() {
 		break;
 	case 2:
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap3);
 		break;
 	}
 
@@ -294,24 +469,46 @@ void Renderer::drawSkyBox() {
 }
 
 void Renderer::drawTerrain() {
-	glDepthMask(GL_TRUE);
+	
+	if (currentScene == 0) {
+		glDepthMask(GL_TRUE);
 
-	SetCurrentShader(floorShader);
-	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 0);
-	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "bumpTex"), 1);
+		SetCurrentShader(lightShader);
+		SetShaderLight(*light);
 
-	glUniform3fv(glGetUniformLocation(currentShader->GetProgram(), "cameraPos"), 1, (float *)& camera->GetPosition());
+		glUniform3fv(glGetUniformLocation(currentShader->GetProgram(), "cameraPos"), 1, (float *)& camera->GetPosition());
+
+		glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 0);
+		glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "bumpTex"), 1);
+
+		modelMatrix.ToIdentity();
+		textureMatrix.ToIdentity();
+
+		UpdateShaderMatrices();
+
+		heightMap->Draw();
+
+		glUseProgram(0);
+		glDepthMask(GL_FALSE);
+	}
+	else {
+		SetCurrentShader(floorShader);
+		glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 0);
+		glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "bumpTex"), 1);
+
+		glUniform3fv(glGetUniformLocation(currentShader->GetProgram(), "cameraPos"), 1, (float *)& camera->GetPosition());
 
 
-	glBlendFunc(GL_SRC_ALPHA, GL_NONE);
-	glEnable(GL_DEPTH_TEST);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_DEPTH_TEST);
 
-	UpdateShaderMatrices();
-	SetShaderLight(*light);
+		UpdateShaderMatrices();
+		SetShaderLight(*light);
 
-	heightMap->Draw();
+		heightMap->Draw();
 
-	glUseProgram(0);
+		glUseProgram(0);
+	}
 }
 
 void Renderer::DrawText(const std::string &text, const Vector3 &position, const float size, const bool perspective) {
@@ -372,6 +569,12 @@ void Renderer::DrawNode(SceneNode * n) {
 		glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "switchScene"), switchScene);
 
 		glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "scene"), currentScene);
+
+		glUniform3fv(glGetUniformLocation(currentShader->GetProgram(), "cameraPos"), 1, (float *)& camera->GetPosition());
+
+		glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 0);
+
+		glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "cubeTex"), 2);
 
 		n->Draw(*this);
 	}
@@ -455,4 +658,44 @@ void Renderer::DrawParticles() {
 
 void Renderer::SetShaderParticleSize(float f) {
 	glUniform1f(glGetUniformLocation(currentShader->GetProgram(), "particleSize"), f);
-}
+}void Renderer::DrawWater() {
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	SetCurrentShader(reflectShader);
+	SetShaderLight(*light);
+	glUniform3fv(glGetUniformLocation(currentShader -> GetProgram(), "cameraPos"), 1, (float *)& camera -> GetPosition());
+	
+	glUniform1i(glGetUniformLocation(currentShader -> GetProgram(), "diffuseTex"), 0);
+	
+	glUniform1i(glGetUniformLocation(currentShader -> GetProgram(), "cubeTex"), 2);
+	
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap);
+	
+	float heightX = (RAW_WIDTH * HEIGHTMAP_X / 2.0f);
+	
+	float heightY = 256 * HEIGHTMAP_Y / 5.0f;
+	
+	float heightZ = (RAW_HEIGHT * HEIGHTMAP_Z / 2.0f);
+	
+	Matrix4 modelt = modelMatrix;
+	Matrix4 texturet = textureMatrix;
+	modelMatrix =
+	Matrix4::Translation(Vector3(heightX, heightY - 200, heightZ)) *
+	Matrix4::Scale(Vector3(heightX, 1, heightZ)) *
+	Matrix4::Rotation(90, Vector3(1.0f, 0.0f, 0.0f));
+	
+	textureMatrix = Matrix4::Scale(Vector3(10.0f, 10.0f, 10.0f)) *
+	Matrix4::Rotation(waterRotate, Vector3(0.0f, 0.0f, 1.0f));
+	
+	
+	UpdateShaderMatrices();
+	
+	quad -> Draw();
+	
+	glUseProgram(0);	modelMatrix = modelt;
+	textureMatrix = texturet;	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);}

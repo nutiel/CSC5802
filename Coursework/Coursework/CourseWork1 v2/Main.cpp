@@ -11,8 +11,8 @@ int main() {
 	bool pause = true, fadein = false, fadeout = false;
 
 	
-	Window w("CourseWork1", 800, 600, false);
-	//Window w("CourseWork1", 1920, 1080, true); //Remember to change to fullscreen
+	//Window w("CourseWork1", 800, 600, false);
+	Window w("CourseWork1", 1920, 1080, true); //Remember to change to fullscreen
 	if (!w.HasInitialised()) {
 		return -1;
 	}

@@ -36,9 +36,9 @@ void main ( void ) {
 		
 		if(scene == 1){
 			
-			gl_FragColor.a = 0.15;
+			gl_FragColor.a = 0.2;
 			
-			vec3 noise = vec3(0.9,0.3,0.2);
+			vec3 noise = vec3(0.8,0.4,0.2);
 			
 			combination = vec4(noise.xyz, gl_FragColor.a);
 		}

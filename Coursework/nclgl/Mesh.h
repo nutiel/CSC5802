@@ -16,6 +16,7 @@ public:
 	static Mesh * GenerateTriangle(float x, float y, float z);
 	static Mesh * GenerateSquare(float x, float y, float z);
 	static Mesh * GenerateQuad();
+	static Mesh * GeneratePyramid();
 
 	void SetTexture(GLuint tex) { texture = tex; }
 	void SetBumpMap(GLuint tex) { bumpTexture = tex; }

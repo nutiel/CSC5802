@@ -12,6 +12,8 @@ public:
 	static void CreatePyramid() {
 		OBJMesh* m = new OBJMesh();
 		m->LoadOBJMesh(MESHDIR"pyramid.obj");
+		/*Mesh* m = new Mesh();
+		m->GeneratePyramid();*/
 		pyramid = m;
 	}
 	static void DeletePyramid() {
